@@ -136,3 +136,6 @@ README.md
 Aquí tienes un resumen de lo que he creado:
 - Directorio Raíz ( e:\WEBS\axFinder\ ) :*
 
+El objetivo es que AxFinder sea un componente que puedas integrar fácilmente en cualquier página o framework web que desees, sin las complejidades de un sistema de usuarios completo.
+
+php -S localhost:8000

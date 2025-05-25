@@ -1,0 +1,433 @@
+// axfinder.ts
+
+// Definición de la URL base de la API
+const API_BASE_URL = './src/api/v1/files.php'; // Ajusta esto según sea necesario
+let currentPath = '';
+
+// Elementos del DOM
+let fileGrid: HTMLElement | null;
+let fileList: HTMLElement | null;
+let breadcrumbsContainer: HTMLElement | null;
+let contextMenu: HTMLElement | null;
+
+/**
+ * Inicializa el explorador de archivos en el contenedor especificado.
+ * @param containerId El ID del elemento HTML donde se renderizará el explorador.
+ */
+export function initAxFinder(containerId: string): void {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Contenedor con ID '${containerId}' no encontrado.`);
+        return;
+    }
+
+    // Cargar el template HTML
+    // Ajustar la ruta para que sea relativa al script que se ejecuta en el navegador, o usar una ruta absoluta si es necesario.
+    // Por ahora, asumimos que el script compilado (ej. dist/axfinder.js) está en una posición donde 'src/templates/axDefault.html' es accesible.
+    // Si index.html está en la raíz y axfinder.js está en dist/, la ruta podría ser '../src/templates/axDefault.html' o similar.
+    // Para simplificar durante el desarrollo, podrías copiar el template a una carpeta '/templates' como parte del build.
+    // Por ahora, intentaremos una ruta que podría funcionar si la estructura de salida lo permite.
+    fetch('src/templates/axDefault.html')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error al cargar el template: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            container.innerHTML = html;
+            // Inicializar elementos del DOM después de cargar el template
+            fileGrid = document.getElementById('file-grid');
+            fileList = document.getElementById('file-list');
+            breadcrumbsContainer = document.getElementById('breadcrumbs'); // Asegúrate de que este ID exista en tu template
+            contextMenu = document.getElementById('context-menu'); // Asegúrate de que este ID exista
+
+            // Cargar archivos iniciales
+            fetchFiles(currentPath);
+            renderBreadcrumbs(currentPath);
+
+            // Configurar listeners de eventos globales (ej. cerrar menú contextual)
+            document.addEventListener('click', closeContextMenu);
+        })
+        .catch(error => console.error('Error al cargar el template:', error));
+}
+
+/**
+ * Obtiene la lista de archivos y carpetas del servidor.
+ * @param path La ruta de la carpeta a listar.
+ */
+async function fetchFiles(path: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_BASE_URL}?action=list&path=${encodeURIComponent(path)}`);
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success) {
+            renderFiles(data.data);
+            currentPath = path;
+            renderBreadcrumbs(path);
+        } else {
+            showError(data.message || 'Error al listar archivos.');
+        }
+    } catch (error) {
+        console.error('Error en fetchFiles:', error);
+        showError('No se pudo conectar con el servidor.');
+    }
+}
+
+/**
+ * Renderiza los archivos y carpetas en la vista.
+ * @param items Un array de objetos de archivo/carpeta.
+ */
+function renderFiles(items: any[]): void {
+    if (!fileGrid || !fileList) return;
+
+    // Limpiar vistas anteriores
+    fileGrid.innerHTML = '';
+    fileList.innerHTML = ''; // Asumiendo que tienes una cabecera para la lista que no quieres borrar
+
+    // Cabecera de la lista (si es necesario, o crearla dinámicamente)
+    const listHeader = `
+        <div class="grid grid-cols-4 gap-4 p-4 border-b border-blue-200 text-sm font-medium text-gray-600">
+            <div>Nombre</div>
+            <div>Tamaño</div>
+            <div>Modificado</div>
+            <div>Acciones</div>
+        </div>`;
+    fileList.innerHTML = listHeader;
+
+    if (items.length === 0) {
+        fileGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Esta carpeta está vacía.</p>';
+        const emptyListRow = document.createElement('div');
+        emptyListRow.className = 'p-4 text-center text-gray-500';
+        emptyListRow.textContent = 'Esta carpeta está vacía.';
+        fileList.appendChild(emptyListRow);
+        return;
+    }
+
+    items.forEach(item => {
+        // Vista de cuadrícula
+        const gridItem = document.createElement('div');
+        gridItem.className = 'file-item p-4 rounded-lg border-2 border-blue-200 bg-white cursor-pointer transition-all hover:shadow-lg hover:border-blue-300';
+        gridItem.innerHTML = `
+            <div class="flex flex-col items-center text-center">
+                <i data-lucide="${getIconForFile(item.name, item.type)}" class="w-10 h-10 mb-2 ${item.type === 'folder' ? 'text-blue-600' : 'text-gray-600'}"></i>
+                <p class="text-sm font-medium text-gray-800 truncate w-full">${item.name}</p>
+                <p class="text-xs text-gray-500 mt-1">${item.type === 'folder' ? `${item.items || 0} items` : formatFileSize(item.size)}</p>
+            </div>
+        `;
+        gridItem.addEventListener('click', () => handleItemClick(item.name, item.type));
+        gridItem.addEventListener('contextmenu', (e) => showContextMenu(e, item.name, item.type));
+        fileGrid.appendChild(gridItem);
+
+        // Vista de lista
+        const listItem = document.createElement('div');
+        listItem.className = 'grid grid-cols-4 gap-4 p-4 border-b border-blue-200 cursor-pointer hover:bg-gray-50 transition-colors';
+        listItem.innerHTML = `
+            <div class="flex items-center">
+                <i data-lucide="${getIconForFile(item.name, item.type)}" class="w-5 h-5 mr-3 ${item.type === 'folder' ? 'text-blue-600' : 'text-gray-600'}"></i>
+                <span class="text-sm text-gray-800">${item.name}</span>
+            </div>
+            <div class="text-sm text-gray-600">${item.type === 'folder' ? `${item.items || 0} items` : formatFileSize(item.size)}</div>
+            <div class="text-sm text-gray-600">${formatDate(item.modified)}</div>
+            <div class="flex space-x-2">
+                <!-- Aquí irían botones de acción como ver, editar, etc. -->
+            </div>
+        `;
+        listItem.addEventListener('click', () => handleItemClick(item.name, item.type));
+        listItem.addEventListener('contextmenu', (e) => showContextMenu(e, item.name, item.type));
+        fileList.appendChild(listItem);
+    });
+
+    // Re-inicializar Lucide icons si es necesario (depende de cómo se carguen)
+    if ((window as any).lucide) {
+        (window as any).lucide.createIcons();
+    }
+}
+
+/**
+ * Maneja el clic en un archivo o carpeta.
+ * @param name Nombre del item.
+ * @param type Tipo del item ('file' o 'folder').
+ */
+function handleItemClick(name: string, type: string): void {
+    if (type === 'folder') {
+        const newPath = currentPath ? `${currentPath}/${name}` : name;
+        fetchFiles(newPath);
+    }
+    // Podrías añadir lógica para previsualizar archivos aquí
+}
+
+/**
+ * Muestra el menú contextual.
+ * @param event El evento del ratón.
+ * @param name Nombre del item.
+ * @param type Tipo del item.
+ */
+function showContextMenu(event: MouseEvent, name: string, type: string): void {
+    event.preventDefault();
+    if (!contextMenu) return;
+
+    contextMenu.innerHTML = `
+        <div class="bg-white border border-gray-300 rounded-md shadow-lg py-1 text-sm">
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="renameItem('${name}', '${type}')">Renombrar</a>
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="deleteItem('${name}', '${type}')">Eliminar</a>
+            ${type === 'file' ? `<a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="downloadFile('${name}')">Descargar</a>` : ''}
+        </div>
+    `;
+    contextMenu.style.top = `${event.pageY}px`;
+    contextMenu.style.left = `${event.pageX}px`;
+    contextMenu.classList.remove('hidden');
+}
+
+/**
+ * Cierra el menú contextual.
+ */
+function closeContextMenu(): void {
+    if (contextMenu && !contextMenu.classList.contains('hidden')) {
+        contextMenu.classList.add('hidden');
+    }
+}
+
+/**
+ * Renderiza las migas de pan para la navegación.
+ * @param path La ruta actual.
+ */
+function renderBreadcrumbs (path: string): void {
+    const breadcrumbsContainer = document.getElementById('breadcrumbs');
+    if (!breadcrumbsContainer) {
+        console.error('Breadcrumbs container not found');
+        return; // Salir si el contenedor no existe
+    }
+    breadcrumbsContainer.innerHTML = ''; // Limpiar migas de pan anteriores
+    const parts = path.split('/').filter(p:string => p);
+    let currentLinkPath = '';
+
+    const homeLink = document.createElement('span');
+    homeLink.className = 'cursor-pointer hover:underline';
+    homeLink.textContent = 'Inicio';
+    homeLink.onclick = () => fetchFiles('');
+    breadcrumbsContainer.appendChild(homeLink);
+
+    parts.forEach(part: string, index: number => {
+        const separator = document.createElement('span');
+        separator.className = 'mx-2';
+        separator.textContent = '/';
+        breadcrumbsContainer.appendChild(separator);
+
+        currentLinkPath += (currentLinkPath ? '/' : '') + part;
+        const partLink = document.createElement('span');
+        partLink.className = 'cursor-pointer hover:underline';
+        partLink.textContent = part;
+        const capturedPath = currentLinkPath; // Capturar el valor actual para el closure
+        partLink.onclick = () => fetchFiles(capturedPath);
+        breadcrumbsContainer.appendChild(partLink);
+    });
+}
+
+/**
+ * Cambia entre vista de cuadrícula y lista.
+ * @param mode 'grid' o 'list'.
+ */
+function setViewMode(mode: 'grid' | 'list'): void {
+    if (!fileGrid || !fileList) return;
+    const gridBtn = document.getElementById('grid-btn');
+    const listBtn = document.getElementById('list-btn');
+
+    if (mode === 'grid') {
+        fileGrid.classList.remove('hidden');
+        fileList.classList.add('hidden');
+        gridBtn?.classList.add('bg-blue-100', 'text-blue-600');
+        gridBtn?.classList.remove('text-gray-600', 'hover:bg-blue-50');
+        listBtn?.classList.add('text-gray-600', 'hover:bg-blue-50');
+        listBtn?.classList.remove('bg-blue-100', 'text-blue-600');
+    } else {
+        fileGrid.classList.add('hidden');
+        fileList.classList.remove('hidden');
+        listBtn?.classList.add('bg-blue-100', 'text-blue-600');
+        listBtn?.classList.remove('text-gray-600', 'hover:bg-blue-50');
+        gridBtn?.classList.add('text-gray-600', 'hover:bg-blue-50');
+        gridBtn?.classList.remove('bg-blue-100', 'text-blue-600');
+    }
+}
+
+// --- Funciones de ayuda ---
+
+/**
+ * Obtiene el nombre del icono de Lucide para un archivo.
+ * @param fileName Nombre del archivo.
+ * @param type Tipo ('file' o 'folder').
+ * @returns Nombre del icono de Lucide.
+ */
+function getIconForFile(fileName: string, type: string): string {
+    if (type === 'folder') return 'folder';
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+        case 'pdf': return 'file-text'; // O un icono específico de PDF si lo tienes
+        case 'jpg': case 'jpeg': case 'png': case 'gif': return 'image';
+        case 'doc': case 'docx': return 'file-text'; // O un icono de Word
+        case 'xls': case 'xlsx': return 'file-spreadsheet';
+        case 'ppt': case 'pptx': return 'file-slideshow';
+        case 'zip': case 'rar': case 'tar': case 'gz': return 'archive';
+        case 'mp3': case 'wav': case 'ogg': return 'music';
+        case 'mp4': case 'mov': case 'avi': case 'mkv': return 'video';
+        case 'txt': return 'file-text';
+        default: return 'file';
+    }
+}
+
+/**
+ * Formatea el tamaño del archivo a un formato legible.
+ * @param bytes Tamaño en bytes.
+ * @returns Tamaño formateado.
+ */
+function formatFileSize(bytes?: number): string {
+    if (bytes === undefined || bytes === null) return '-';
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Formatea una marca de tiempo a una fecha legible.
+ * @param timestamp Marca de tiempo.
+ * @returns Fecha formateada.
+ */
+function formatDate(timestamp?: number): string {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+/**
+ * Muestra un mensaje de error.
+ * @param message Mensaje de error.
+ */
+function showError(message: string): void {
+    // Implementa una forma de mostrar errores al usuario, ej. un toast o modal
+    console.error('Error AxFinder:', message);
+    alert(`Error: ${message}`); // Placeholder
+}
+
+// --- Acciones del menú contextual (necesitan implementación de API) ---
+
+async function renameItem(name: string, type: string): Promise<void> {
+    const newName = prompt(`Nuevo nombre para ${name}:`, name);
+    if (newName && newName !== name) {
+        const formData = new FormData();
+        formData.append('action', 'rename');
+        formData.append('path', currentPath);
+        formData.append('oldName', name);
+        formData.append('newName', newName);
+        formData.append('type', type);
+
+        try {
+            const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
+            const result = await response.json();
+            if (result.success) {
+                fetchFiles(currentPath);
+            } else {
+                showError(result.message || 'Error al renombrar.');
+            }
+        } catch (error) {
+            showError('Error de conexión al renombrar.');
+        }
+    }
+    closeContextMenu();
+}
+
+async function deleteItem(name: string, type: string): Promise<void> {
+    if (confirm(`¿Seguro que quieres eliminar ${name}?`)) {
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('path', currentPath);
+        formData.append('name', name);
+        formData.append('type', type);
+
+        try {
+            const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
+            const result = await response.json();
+            if (result.success) {
+                fetchFiles(currentPath);
+            } else {
+                showError(result.message || 'Error al eliminar.');
+            }
+        } catch (error) {
+            showError('Error de conexión al eliminar.');
+        }
+    }
+    closeContextMenu();
+}
+
+async function createFolder(): Promise<void> {
+    const folderName = prompt('Nombre de la nueva carpeta:');
+    if (folderName) {
+        const formData = new FormData();
+        formData.append('action', 'createfolder');
+        formData.append('path', currentPath);
+        formData.append('name', folderName);
+
+        try {
+            const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
+            const result = await response.json();
+            if (result.success) {
+                fetchFiles(currentPath);
+            } else {
+                showError(result.message || 'Error al crear carpeta.');
+            }
+        } catch (error) {
+            showError('Error de conexión al crear carpeta.');
+        }
+    }
+}
+
+async function uploadFiles(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+        const formData = new FormData();
+        formData.append('action', 'upload');
+        formData.append('path', currentPath);
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('files[]', input.files[i]);
+        }
+
+        try {
+            // Aquí podrías añadir una barra de progreso
+            const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
+            const result = await response.json();
+            if (result.success) {
+                fetchFiles(currentPath);
+            } else {
+                showError(result.message || 'Error al subir archivos.');
+            }
+        } catch (error) {
+            showError('Error de conexión al subir archivos.');
+        }
+    }
+}
+
+function downloadFile(fileName: string): void {
+    const url = `${API_BASE_URL}?action=download&path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(fileName)}`;
+    window.open(url, '_blank');
+    closeContextMenu();
+}
+
+// Hacer funciones globales si se llaman desde HTML inline
+(window as any).renameItem = renameItem;
+(window as any).deleteItem = deleteItem;
+(window as any).createFolder = createFolder; // Asegúrate de tener un botón para esto
+(window as any).uploadFiles = uploadFiles; // Y un input file
+(window as any).downloadFile = downloadFile;
+(window as any).setViewMode = setViewMode;
+(window as any).toggleFolder = (folderId: string) => { /* Implementar si es necesario para el sidebar */ };
+
+// Ejemplo de cómo podrías iniciar AxFinder desde tu HTML principal:
+// Asegúrate de que el DOM esté cargado
+// document.addEventListener('DOMContentLoaded', () => {
+//     initAxFinder('axfinder'); // 'axfinder' es el ID del div en index.html
+// });
+
+console.log('AxFinder script cargado.');

@@ -1,0 +1,71 @@
+<!-- src/templates/axDefault.html -->
+<div class="axfinder-container h-full flex flex-col bg-gray-100">
+    <!-- Barra de herramientas superior (opcional, para botones de acción globales) -->
+    <div class="p-2 border-b bg-white">
+        <button id="create-folder-btn"
+            class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Crear Carpeta</button>
+        <label for="upload-file-input"
+            class="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 cursor-pointer">Subir
+            Archivo</label>
+        <input type="file" id="upload-file-input" class="hidden" multiple />
+        <!-- Podrías añadir botones para cambiar vista (grid/list) aquí -->
+    </div>
+
+    <!-- Migas de pan -->
+    <div id="breadcrumbs" class="p-2 text-sm text-gray-600 border-b bg-white"></div>
+
+    <!-- Área principal de contenido -->
+    <div class="flex-grow p-4 overflow-auto">
+        <!-- Vista de Cuadrícula (por defecto visible) -->
+        <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            <!-- Los items se insertarán aquí por JS -->
+        </div>
+
+        <!-- Vista de Lista (inicialmente oculta, o controlada por un botón) -->
+        <div id="file-list" class="hidden">
+            <!-- Cabecera de la lista -->
+            <div class="grid grid-cols-4 gap-4 p-2 mb-2 border-b text-sm font-medium text-gray-500 bg-gray-50">
+                <div>Nombre</div>
+                <div>Tamaño</div>
+                <div>Modificado</div>
+                <div>Acciones</div>
+            </div>
+            <!-- Los items se insertarán aquí por JS -->
+        </div>
+    </div>
+
+    <!-- Menú Contextual (oculto por defecto) -->
+    <div id="context-menu" class="absolute hidden z-50">
+        <!-- El contenido se insertará aquí por JS -->
+    </div>
+
+    <!-- Modales (ej. para renombrar, crear carpeta, etc. - ocultos por defecto) -->
+    <div id="rename-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">Renombrar</h3>
+            <input type="text" id="rename-input" class="w-full p-2 border rounded mb-4" />
+            <div class="flex justify-end space-x-2">
+                <button id="rename-cancel-btn"
+                    class="px-4 py-2 text-sm bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
+                <button id="rename-confirm-btn"
+                    class="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-folder-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">Crear Nueva Carpeta</h3>
+            <input type="text" id="create-folder-input" class="w-full p-2 border rounded mb-4"
+                placeholder="Nombre de la carpeta" />
+            <div class="flex justify-end space-x-2">
+                <button id="create-folder-cancel-btn"
+                    class="px-4 py-2 text-sm bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
+                <button id="create-folder-confirm-btn"
+                    class="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Crear</button>
+            </div>
+        </div>
+    </div>
+
+</div>

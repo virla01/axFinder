@@ -1,94 +1,91 @@
-# axFinder API
+<!-- ELIMINA TODA REFERENCIA A LOGIN Y ROLES Y BASE DE DATOS TAMBIEN REFERENCIAS A PUBLIC -->
 
-Una API PHP para la gestión de archivos, inspirada en CKFinder pero diseñada para ser un backend independiente.
+# axFinder - Gestor de Archivos Multimedia Modular
+
+AxFinder es un gestor de archivos multimedia modular y configurable, diseñado para permitir la visualización, organización y edición de archivos de forma sencilla e intuitiva. Puede ser implementado en cualquier página web o integrado en frameworks PHP.
+
+## Características Principales
+
+*   **Backend PHP desacoplado**: La lógica de gestión de archivos (`core/FileManager.php`) es una biblioteca independiente.
+*   **API RESTful**: Expone endpoints para operaciones de archivos (listar, crear carpeta, subir, renombrar, eliminar) a través de `api/v1/files.php`.
+*   **Configurable**: Las rutas base, tipos de archivo permitidos y límites de tamaño se gestionan a través de `config/config.php`.
+*   **Frontend Vanilla JS**: Interfaz de usuario básica en `index.html` que consume la API PHP.
+*   **Manejo de Errores**: Utiliza excepciones PHP estándar y respuestas JSON estructuradas.
 
 ## Estructura del Proyecto
 
 ```
 axFinder/
-├── api/                    # Endpoints de la API (Controladores)
+├── api/
 │   └── v1/
-│       └── files.php       # Controlador para operaciones de archivos y carpetas
-│       └── (otros_controladores.php)
+│       └── files.php       # Adaptador HTTP para FileManager, maneja peticiones y respuestas JSON.
 ├── config/
-│   └── config.php          # Archivo de configuración principal
+│   └── config.php          # Configuración principal (rutas, tipos de archivo, etc.).
 ├── core/
-│   ├── AuthHandler.php     # Lógica de autenticación y autorización
-│   ├── ErrorHandler.php    # Manejo global de errores y excepciones
-│   ├── FileManager.php     # Lógica principal para la gestión de archivos/carpetas
-│   └── ResponseHandler.php # Utilidades para formatear respuestas JSON
-├── public/                 # Directorio público accesible desde la web
-│   ├── .htaccess           # Reglas de reescritura para Apache (URLs amigables)
-│   └── index.php           # Punto de entrada principal y router de la API
-└── uploads/                # Directorio para los archivos subidos (protegido)
-└── README.md               # Este archivo
+│   ├── FileManager.php     # Biblioteca principal para la lógica de gestión de archivos.
+│   ├── ResponseHandler.php # Utilidad para formatear respuestas JSON consistentes.
+│   └── ErrorHandler.php    # (Opcional) Manejo global de errores (actualmente simplificado).
+├── public/
+│   ├── .htaccess           # Reglas de Apache para enrutar todo a index.php (si se usa Apache).
+│   └── index.php           # Punto de entrada para la API (carga config y delega a files.php).
+├── index.html              # Interfaz de usuario principal (frontend con Vanilla JS).
+└── README.md               # Este archivo.
 ```
+
+**Nota**: El directorio `uploads/` (o el configurado en `base_path` dentro de `config.php`) es donde se almacenarán los archivos gestionados. Este directorio debe ser creado manualmente y tener permisos de escritura para el servidor web.
 
 ## Requisitos
 
-*   PHP 8.0 o superior (recomendado 8.1+)
-*   Servidor web (Apache con `mod_rewrite` o Nginx)
-*   Extensión PHP `fileinfo` (para `mime_content_type`)
-*   (Opcional) Composer para manejo de dependencias futuras (ej. para JWT, logging avanzado).
+*   PHP 8.0 o superior (recomendado 8.1+).
+*   Servidor web (Apache, Nginx, Laragon, XAMPP, etc.).
+*   Extensión PHP `fileinfo` (para detección de tipos MIME).
 
 ## Configuración
 
 1.  **Clonar/Descargar el proyecto.**
 2.  **Configurar el servidor web:**
-    *   Asegúrate de que el `DocumentRoot` de tu servidor web apunte al directorio `public/`.
-    *   Para Apache, `mod_rewrite` debe estar habilitado para que `.htaccess` funcione.
-    *   Para Nginx, necesitarás configurar las reglas de reescritura equivalentes.
-3.  **Crear el directorio `uploads/`:**
-    *   Asegúrate de que el directorio `axFinder/uploads/` exista y tenga permisos de escritura para el usuario del servidor web (ej. `www-data`).
-4.  **Configurar `config/config.php`:**
-    *   Abre `config/config.php`.
-    *   Ajusta `'base_path'`: Si tu aplicación está en `http://localhost/axFinder/`, el `base_path` debe ser `'/axFinder/public'`. Si está en la raíz del dominio, podría ser `''` o `'/'` dependiendo de tu `index.php` y `.htaccess`.
-    *   Ajusta `'upload_dir'` si es necesario (aunque por defecto debería funcionar).
-    *   Configura `'jwt_secret_key'` con una cadena aleatoria y segura si planeas usar autenticación JWT.
-    *   Revisa `'allowed_file_types'` y `'max_file_size_mb'`.
-    *   Ajusta `'cors'` si tu frontend se sirve desde un origen diferente.
-    *   Establece `'debug_mode'` a `false` en producción.
-5.  **(Opcional) Instalar dependencias con Composer:**
-    *   Si se añaden dependencias (ej. `firebase/php-jwt`), ejecuta `composer install` en la raíz del proyecto.
+    *   Asegúrate de que el `DocumentRoot` de tu servidor web apunte al directorio raíz del proyecto `axFinder/` si vas a acceder a `index.html` directamente.
+    *   Si usas Apache y quieres URLs amigables para la API (ej. `http://localhost/api/v1/files` en lugar de `http://localhost/public/index.php/api/v1/files`), el `DocumentRoot` debería apuntar a `axFinder/public/` y `mod_rewrite` debe estar habilitado.
+3.  **Crear el directorio de subidas:**
+    *   Crea el directorio especificado en `$config['base_path']` dentro de `config/config.php` (por defecto, podría ser un subdirectorio como `uploads/` dentro de `axFinder/`).
+    *   Asegúrate de que este directorio tenga permisos de escritura para el usuario del servidor web (ej. `www-data`).
+4.  **Revisar `config/config.php`:**
+    *   `'base_path'`: Ruta absoluta en el servidor al directorio raíz donde se gestionarán los archivos. Ejemplo: `__DIR__ . '/../../uploads_directorio_real'`. Es crucial que esta ruta sea correcta y segura.
+    *   `'allowed_file_types'`: Array de extensiones de archivo permitidas.
+    *   `'max_file_size_mb'`: Tamaño máximo de archivo permitido en MB.
+    *   `'base_url_for_api'`: (Opcional, si se necesita) URL base para la API si es diferente del frontend.
+    *   `'cors'`: Configuración para Cross-Origin Resource Sharing si el frontend y backend están en dominios diferentes.
+    *   `'debug_mode'`: `true` para desarrollo (muestra más errores), `false` para producción.
 
-## Endpoints de la API (Ejemplos Iniciales bajo `/api/v1/files`)
+## Uso
 
-La base de la URL para los endpoints será algo como `http://tu-dominio.com/BASE_PATH_CONFIGURADO/api/v1/`.
-Si `base_path` es `'/axFinder/public'`, entonces `http://tu-dominio.com/axFinder/public/api/v1/`.
+1.  **Iniciar el servidor web** (ej. Laragon, XAMPP, o el servidor interno de PHP para desarrollo: `php -S localhost:8000 -t public` si quieres servir la API desde `public/` o `php -S localhost:8000` desde la raíz para servir `index.html`).
+2.  **Acceder a `index.html`** en tu navegador (ej. `http://localhost/axFinder/index.html` o `http://localhost:8000/index.html` dependiendo de tu configuración).
+    La interfaz permitirá interactuar con la API para listar, crear carpetas, subir, renombrar y eliminar archivos.
 
-*   **`GET /files/list[/{encodedPath}]`**: Lista archivos y carpetas.
-    *   `{encodedPath}`: (Opcional) Ruta relativa codificada en URL dentro del directorio `uploads`. Ejemplo: `subfolder%2Fanotherfolder`.
-    *   Si no se provee `encodedPath`, lista la raíz del directorio `uploads`.
-*   **`POST /files/upload`**: Sube uno o más archivos.
+## Endpoints de la API (`api/v1/files.php`)
+
+La API responde a peticiones `GET` y `POST` al script `api/v1/files.php`.
+Las acciones se determinan por el parámetro `action` en la query string (para GET) o en el cuerpo `FormData` (para POST).
+
+*   **`GET ?action=list&path={encodedPath}`**: Lista archivos y carpetas.
+    *   `path`: (Opcional) Ruta relativa dentro de `base_path`.
+*   **`POST (action=upload)`**: Sube uno o más archivos.
     *   Debe ser una petición `multipart/form-data`.
-    *   Los archivos se envían bajo cualquier nombre de campo (ej. `myFile`, `files[]`).
-    *   Puede incluir un campo `destination` (opcional) para especificar una subcarpeta de destino.
-*   **`POST /files/createfolder`**: Crea una nueva carpeta.
-    *   Cuerpo JSON: `{ "path": "ruta/relativa/a/nueva_carpeta" }`
-*   **`DELETE /files/delete`**: Elimina un archivo o carpeta.
-    *   Cuerpo JSON: `{ "path": "ruta/relativa/a/elemento_a_eliminar" }`
-*   **`PUT /files/rename`**: Renombra un archivo o carpeta.
-    *   Cuerpo JSON: `{ "old_path": "ruta/relativa/actual", "new_name": "nuevo_nombre_sin_ruta" }`
+    *   Campo `path`: Directorio de destino relativo a `base_path`.
+    *   Campo `files[]`: Array de archivos a subir.
+*   **`POST (action=create_folder)`**: Crea una nueva carpeta.
+    *   Campo `path`: Ruta donde se creará la nueva carpeta (relativa a `base_path`).
+    *   Campo `name`: Nombre de la nueva carpeta.
+*   **`POST (action=delete)`**: Elimina un archivo o carpeta.
+    *   Campo `path`: Ruta al elemento a eliminar (relativa a `base_path`).
+*   **`POST (action=rename)`**: Renombra un archivo o carpeta.
+    *   Campo `path`: Ruta actual al elemento.
+    *   Campo `newName`: Nuevo nombre para el elemento.
 
-**Autenticación:**
-Actualmente, `AuthHandler.php` tiene placeholders. La autenticación real (ej. JWT) necesita ser implementada. Por defecto, para desarrollo inicial, `AuthHandler::isAuthenticated()` puede devolver `true` temporalmente, pero `AuthHandler::requireAuth()` se llama en los métodos del controlador.
+## Próximos Pasos y Mejoras Potenciales
 
-## Cómo Probar
-
-Puedes usar herramientas como Postman o Insomnia para probar los endpoints de la API.
-
-1.  Asegúrate de que tu servidor web esté corriendo y configurado correctamente.
-2.  Envía peticiones a los endpoints listados arriba.
-    *   Para `POST`, `PUT`, `DELETE` que esperan un cuerpo JSON, asegúrate de establecer la cabecera `Content-Type: application/json`.
-    *   Para subida de archivos, usa `multipart/form-data`.
-
-## Próximos Pasos Sugeridos
-
-*   Implementar un sistema de autenticación robusto (JWT es una buena opción).
-*   Añadir logging más detallado (ej. con Monolog).
-*   Expandir `FileManager.php` con más funcionalidades (mover, copiar, buscar, obtener información detallada de archivos, previsualizaciones).
-*   Crear más controladores para otras entidades si es necesario (ej. `users.php` si hay gestión de usuarios).
-*   Escribir pruebas unitarias y de integración.
-*   Mejorar la sanitización de entradas y la seguridad general.
-*   Considerar el uso de una librería de routing más avanzada para `public/index.php`.
-*   Implementar la gestión de permisos por usuario/rol para acceder a diferentes archivos/carpetas.
+*   **Más Funcionalidades**: Añadir operaciones como mover, copiar, buscar, obtener información detallada, previsualizaciones de imágenes/video.
+*   **Pruebas**: Escribir pruebas unitarias y de integración.
+*   **Interfaz de Usuario**: Mejorar la UX/UI, añadir drag & drop, selección múltiple avanzada, indicadores de progreso, etc.
+*   **Modularización del Frontend**: Separar el JavaScript de `index.html` a su propio archivo `.js`.

@@ -1,3 +1,5 @@
+### NO HAY LOGIN NI ROLES NI NADA DE ESO, TAMPOCO BASE DE DATOS!
+
 AxFinder es un gestor de archivos multimedia modular y configurable. Permite visualizar, organizar y editar archivos multimedia de forma sencilla e intuitiva.
 AxFinder ahora puede ser implementado de forma modular en cualquier página web, simplemente incluyendo el script y definiendo un contenedor donde se cargará.
 Tambien puede ser implementada en cualquier framework, solo modificando la configuracion.
