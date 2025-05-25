@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirigir todas las solicitudes al script index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>
+
+# Opcional: Prevenir el listado de directorios
+Options -Indexes
+
+# Opcional: Medidas de seguridad básicas
+<FilesMatch "\.(engine|inc|info|install|make|module|profile|test|po|sh|sql|theme|tpl(\$.*)|xtmpl|phtml|log|bak|swp|orig|conf|dist|fla|psd|in[ci]|master|cfg|hh|lock|scc|swo|swp|cgi|exe|dll|bat|pl|py|rb|sh|bash|csh|ksh|zsh|asp|aspx|cfm|cgi|jsp|php[34567s]|pht|phtm|phtml|shtm|shtml|phar|phps|phpt|xhtm|xhtml|)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+<FilesMatch "^(LICENSE|README|README\.txt|readme\.txt|README\.md|readme\.md|changelog\.txt|CHANGELOG\.txt|TODO|COPYING|INSTALL|UPGRADING|composer\.json|composer\.lock|package\.json|package-lock\.json|\.env|\.env\.example|\.gitattributes|\.gitignore|\.gitmodules|\.travis\.yml|appveyor\.yml|phpunit\.xml|phpunit\.xml\.dist|phpcs\.xml|phpcs\.xml\.dist|psalm\.xml|psalm\.xml\.dist|phpstan\.neon|phpstan\.neon\.dist|Makefile|Dockerfile|docker-compose\.yml)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
