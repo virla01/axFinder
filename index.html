@@ -28,11 +28,15 @@
 
 <body class="font-sans antialiased">
 	<div class="relative w-full mx-auto max-w-2xl px-6 lg:max-w-7xl">
-		<div id="axfinder" class="ax-finder"></div>
-		<script type="module">
-			import { initAxFinder } from './axfinder.js';
+		<div id="axfinder"></div>
+		<script src="axfinder.js"></script>
+		<script>
 			document.addEventListener('DOMContentLoaded', () => {
-				initAxFinder('axfinder');
+				if (typeof initAxFinder === 'function') {
+					initAxFinder('axfinder');
+				} else {
+					console.error('Error: initAxFinder no está definido. Asegúrate de que axfinder.js se cargó correctamente y define esta función.');
+				}
 			});
 		</script>
 	</div>

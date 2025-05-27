@@ -9,3 +9,4 @@ Tambien puede ser implementada en cualquier framework, solo modificando la confi
 # Cada vez que se modifiquen archivos importantes y pueda causar problemas en la logica, avisar para subirlo a git.
 # Los comentarios deben ser claros y explicativos, para que sea facil de entender. No agregar comentarios que no sean necesarios.
 # Los console para ver errores deben ser eliminados una vez que se soluciono todo.
+# Cuando llames a un archivo verifica que exista, al igual que alguna funcion, revisa que exista o que tiene otro nombre, cuanto mas rapido mejor, piedo tiempo hermoso, esperando que vos atiendas a otras personas.

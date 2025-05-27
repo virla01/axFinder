@@ -1,71 +1,117 @@
 <!-- src/templates/axDefault.html -->
-<div class="axfinder-container h-full flex flex-col bg-gray-100">
-    <!-- Barra de herramientas superior (opcional, para botones de acción globales) -->
-    <div class="p-2 border-b bg-white">
-        <button id="create-folder-btn"
-            class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Crear Carpeta</button>
-        <label for="upload-file-input"
-            class="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 cursor-pointer">Subir
-            Archivo</label>
-        <input type="file" id="upload-file-input" class="hidden" multiple />
-        <!-- Podrías añadir botones para cambiar vista (grid/list) aquí -->
-    </div>
-
-    <!-- Migas de pan -->
-    <div id="breadcrumbs" class="p-2 text-sm text-gray-600 border-b bg-white"></div>
-
-    <!-- Área principal de contenido -->
-    <div class="flex-grow p-4 overflow-auto">
-        <!-- Vista de Cuadrícula (por defecto visible) -->
-        <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            <!-- Los items se insertarán aquí por JS -->
+<!-- Modificado ahi te dejo comentarios para que hagas las modificaciones necesarias -->
+<div class="w-full h-full">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white border-r border-blue-200 flex flex-col">
+        <div class="p-4 border-b border-blue-200">
+            <h2 class="text-lg font-semibold text-blue-600">Explorador</h2>
         </div>
-
-        <!-- Vista de Lista (inicialmente oculta, o controlada por un botón) -->
-        <div id="file-list" class="hidden">
-            <!-- Cabecera de la lista -->
-            <div class="grid grid-cols-4 gap-4 p-2 mb-2 border-b text-sm font-medium text-gray-500 bg-gray-50">
-                <div>Nombre</div>
-                <div>Tamaño</div>
-                <div>Modificado</div>
-                <div>Acciones</div>
-            </div>
-            <!-- Los items se insertarán aquí por JS -->
-        </div>
-    </div>
-
-    <!-- Menú Contextual (oculto por defecto) -->
-    <div id="context-menu" class="absolute hidden z-50">
-        <!-- El contenido se insertará aquí por JS -->
-    </div>
-
-    <!-- Modales (ej. para renombrar, crear carpeta, etc. - ocultos por defecto) -->
-    <div id="rename-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-lg font-medium mb-4">Renombrar</h3>
-            <input type="text" id="rename-input" class="w-full p-2 border rounded mb-4" />
-            <div class="flex justify-end space-x-2">
-                <button id="rename-cancel-btn"
-                    class="px-4 py-2 text-sm bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
-                <button id="rename-confirm-btn"
-                    class="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Confirmar</button>
+        <div class="flex-1 overflow-y-auto p-2">
+            <div class="space-y-1">
+                <!-- Aca hay que poner el link -->
+                <div
+                    class="flex items-center py-1 px-2 hover:bg-blue-100 cursor-pointer text-sm rounded-md transition-colors">
+                    <i data-lucide="home" class="w-4 h-4 mr-3 text-blue-600"></i>
+                    <span class="text-gray-800">Inicio</span>
+                </div>
+                <!-- Modificalo para que funcione al armar los directorios y subdirectorios -->
+                <div class="tree-folder">
+                    <div class="flex items-center py-1 px-2 hover:bg-blue-100 cursor-pointer text-sm rounded-md transition-colors"
+                        id="folder-documents">
+                        <div class="w-4 h-4 mr-1 flex items-center justify-center">
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-600" id="documents-icon"></i>
+                        </div>
+                        <i data-lucide="folder" class="w-4 h-4 mr-2 text-blue-600"></i>
+                        <span class="text-gray-800">Documentos</span>
+                    </div>
+                    <div class="ml-5 space-y-1" id="documents-children">
+                        <div
+                            class="flex items-center py-1 px-2 hover:bg-blue-100 cursor-pointer text-sm rounded-md transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4 mr-2 text-blue-600"></i>
+                            <span class="text-gray-800">Trabajo</span>
+                        </div>
+                        <div
+                            class="flex items-center py-1 px-2 hover:bg-blue-100 cursor-pointer text-sm rounded-md transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4 mr-2 text-blue-600"></i>
+                            <span class="text-gray-800">Personal</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    <!-- Fin Sidebar -->
 
-    <div id="create-folder-modal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-lg font-medium mb-4">Crear Nueva Carpeta</h3>
-            <input type="text" id="create-folder-input" class="w-full p-2 border rounded mb-4"
-                placeholder="Nombre de la carpeta" />
-            <div class="flex justify-end space-x-2">
-                <button id="create-folder-cancel-btn"
-                    class="px-4 py-2 text-sm bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
-                <button id="create-folder-confirm-btn"
-                    class="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Crear</button>
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+        <!-- Toolbar -->
+        <div class="bg-white border-b border-blue-200 p-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i>
+                    <input type="text" placeholder="Buscar archivos..."
+                        class="pl-10 pr-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white text-gray-900 placeholder-gray-500" />
+                </div>
+            </div>
+            <!-- Hacer que funcionen -->
+            <div class="flex items-center space-x-2">
+                <button class="p-2 rounded transition-colors bg-blue-100 text-blue-600" id="grid-btn">
+                    <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                </button>
+                <button class="p-2 rounded transition-colors text-gray-600 hover:bg-blue-50" id="list-btn">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
-    </div>
+        <!-- Fin Toolbar -->
 
+        <!-- File Grid -->
+        <div class="flex-1 p-6 overflow-y-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="file-grid">
+                <!-- foreach para cargar los archivos -->
+                <div class="file-item p-4 rounded-lg border-2 border-blue-200 bg-white cursor-pointer transition-all hover:shadow-lg hover:border-blue-300"
+                    data-file-id="1">
+                    <div class="flex flex-col items-center text-center">
+                        <i data-lucide="folder" class="w-10 h-10 mb-2 text-blue-600"></i>
+                        <p class="text-sm font-medium text-gray-800 truncate w-full">Documentos</p>
+                        <p class="text-xs text-gray-500 mt-1">12 items</p>
+                    </div>
+                </div>
+                <!-- fin foreach -->
+            </div>
+
+            <!-- List View (Hidden by default) -->
+            <div class="bg-white rounded-lg border border-blue-200 hidden" id="file-list">
+                <div class="grid grid-cols-4 gap-4 p-4 border-b border-blue-200 text-sm font-medium text-gray-600">
+                    <div>Nombre</div>
+                    <div>Tamaño</div>
+                    <div>Modificado</div>
+                    <div>Acciones</div>
+                </div>
+                <div
+                    class="grid grid-cols-4 gap-4 p-4 border-b border-blue-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="folder" class="w-5 h-5 mr-3 text-blue-600"></i>
+                        <span class="text-sm text-gray-800">Documentos</span>
+                    </div>
+                    <div class="text-sm text-gray-600">12 items</div>
+                    <div class="text-sm text-gray-600">2 días</div>
+                    <div class="flex space-x-2">
+                        <button class="p-1 hover:bg-gray-200 rounded transition-colors">
+                            <i data-lucide="eye" class="w-4 h-4 text-gray-600"></i>
+                        </button>
+                        <button class="p-1 hover:bg-gray-200 rounded transition-colors">
+                            <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin File Grid -->
+    </div>
+    <!-- Fin Main Content -->
+
+    <!-- Footer -->
+    <div class="flex"></div>
+    <!-- Fin Footer -->
 </div>
