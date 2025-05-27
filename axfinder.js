@@ -51,6 +51,9 @@ function initAxFinder(containerId) {
                     <button class="p-2 rounded transition-colors hover:rounded-full hover:bg-black/5" id="list-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path class="fill-blue-500" d="M80 48H16A16 16 0 0 0 0 64v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16V64a16 16 0 0 0-16-16zm0 160H16a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64a16 16 0 0 0-16-16zm0 160H16a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64a16 16 0 0 0-16-16zm416-136H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16v-16a16 16 0 0 0-16-16zm0 160H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16v-16a16 16 0 0 0-16-16zm0-320H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16V88a16 16 0 0 0-16-16z"></path></svg>
                     </button>
+                    <button class="p-2 rounded transition-colors hover:rounded-full hover:bg-black/5" id="config-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path class="fill-blue-500" d="M452.515 237l31.843-18.382c9.426-5.441 13.996-16.542 11.177-27.054-11.404-42.531-33.842-80.547-64.058-110.797-7.68-7.688-19.575-9.246-28.985-3.811l-31.785 18.358a196.276 196.276 0 0 0-32.899-19.02V39.541a24.016 24.016 0 0 0-17.842-23.206c-41.761-11.107-86.117-11.121-127.93-.001-10.519 2.798-17.844 12.321-17.844 23.206v36.753a196.276 196.276 0 0 0-32.899 19.02l-31.785-18.358c-9.41-5.435-21.305-3.877-28.985 3.811-30.216 30.25-52.654 68.265-64.058 110.797-2.819 10.512 1.751 21.613 11.177 27.054L59.485 237a197.715 197.715 0 0 0 0 37.999l-31.843 18.382c-9.426 5.441-13.996 16.542-11.177 27.054 11.404 42.531 33.842 80.547 64.058 110.797 7.68 7.688 19.575 9.246 28.985 3.811l31.785-18.358a196.202 196.202 0 0 0 32.899 19.019v36.753a24.016 24.016 0 0 0 17.842 23.206c41.761 11.107 86.117 11.122 127.93.001 10.519-2.798 17.844-12.321 17.844-23.206v-36.753a196.34 196.34 0 0 0 32.899-19.019l31.785 18.358c9.41 5.435 21.305 3.877 28.985-3.811 30.216-30.25 52.654-68.266 64.058-110.797 2.819-10.512-1.751-21.613-11.177-27.054L452.515 275c1.22-12.65 1.22-25.35 0-38zm-52.679 63.019l43.819 25.289a200.138 200.138 0 0 1-33.849 58.528l-43.829-25.309c-31.984 27.397-36.659 30.077-76.168 44.029v50.599a200.917 200.917 0 0 1-67.618 0v-50.599c-39.504-13.95-44.196-16.642-76.168-44.029l-43.829 25.309a200.15 200.15 0 0 1-33.849-58.528l43.819-25.289c-7.63-41.299-7.634-46.719 0-88.038l-43.819-25.289c7.85-21.229 19.31-41.049 33.849-58.529l43.829 25.309c31.984-27.397 36.66-30.078 76.168-44.029V58.845a200.917 200.917 0 0 1 67.618 0v50.599c39.504 13.95 44.196 16.642 76.168 44.029l43.829-25.309a200.143 200.143 0 0 1 33.849 58.529l-43.819 25.289c7.631 41.3 7.634 46.718 0 88.037zM256 160c-52.935 0-96 43.065-96 96s43.065 96 96 96 96-43.065 96-96-43.065-96-96-96zm0 144c-26.468 0-48-21.532-48-48 0-26.467 21.532-48 48-48s48 21.533 48 48c0 26.468-21.532 48-48 48z" class=""></path></svg>
+                    </button>
                 </div>
             </div>
             <!-- Fin Toolbar -->
@@ -145,7 +148,15 @@ function loadFolders() {
         console.error('Error: No se encontró el contenedor de carpetas del sidebar.');
         return;
     }
-    foldersContainer.innerHTML = '<p class="p-2 text-xs text-gray-400">Cargando carpetas...</p>';
+    foldersContainer.innerHTML = `
+        <div class="flex items-center justify-center p-4">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-sm text-gray-600">Cargando directorios...</p>
+        </div>
+    `;
 
     fetch('src/api/files.php?action=list_folders')
         .then(response => {
@@ -399,21 +410,29 @@ function loadFiles(folderName) {
                     gridItem.setAttribute('data-file-id', item.name);
                     gridItem.setAttribute('data-file-type', item.type);
 
-                    let gridIconHtml = '';
                     if (item.type === 'folder') {
-                        // Para carpetas, usar el SVG directamente, envuelto en un div para estilizar tamaño/color si es necesario
-                        gridIconHtml = `<div class="w-16 h-16 text-blue-500 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                        const folderIconHtml = `<div class="w-16 h-16 text-blue-500 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                        gridItem.innerHTML = `
+                            ${folderIconHtml}
+                            <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
+                        `;
                     } else if (item.imageUrl) { // Si es una imagen y tiene imageUrl para la miniatura
-                        gridIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="w-full h-24 object-cover rounded mb-2">`;
+                        // Aplicar el diseño específico para imágenes solicitado por el usuario
+                        // Las clases 'flex flex-col items-center text-center' ya están en gridItem.className
+                        const imageHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="w-full h-32 object-contain rounded-t-lg mb-2">`;
+                        gridItem.innerHTML = `
+                            ${imageHtml}
+                            <span class="text-sm font-medium text-gray-700 truncate w-full mt-1">${item.name}</span>
+                            ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''}
+                        `;
                     } else { // Para otros archivos, usar el SVG del icono genérico de archivo
-                        gridIconHtml = `<div class="w-16 h-16 text-gray-400 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                        const fileIconHtml = `<div class="w-16 h-16 text-gray-400 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                        gridItem.innerHTML = `
+                            ${fileIconHtml}
+                            <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
+                            ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''}
+                        `;
                     }
-
-                    gridItem.innerHTML = `
-                        ${gridIconHtml}
-                        <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
-                        ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''}
-                    `;
 
                     // Crear elemento para la vista Lista
                     const listItem = document.createElement('div');
@@ -452,7 +471,6 @@ function loadFiles(folderName) {
                 });
 
             } else {
-                Cristina
                 console.error('Error al cargar archivos:', data.message || 'Respuesta no exitosa');
                 fileView.innerHTML = `<p class="p-4 text-red-500">Error al cargar archivos: ${data.message || 'Error desconocido'}</p>`;
             }
@@ -464,14 +482,14 @@ function loadFiles(folderName) {
 }
 
 function clearFileView() {
-    const fileView = document.getElementById('file-view');
+    const gridViewContainer = document.getElementById('grid-view-container');
+    const listViewContainer = document.getElementById('list-view-container');
     const currentPathElement = document.getElementById('current-path');
-    if (fileView) {
-        fileView.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta para ver los archivos.</p>';
-    }
-    if (currentPathElement) {
-        currentPathElement.textContent = '/';
-    }
+
+    const initialMsg = '<p class="p-4 text-gray-500">Seleccione una carpeta para ver los archivos.</p>';
+    if (gridViewContainer) gridViewContainer.innerHTML = initialMsg;
+    if (listViewContainer) listViewContainer.innerHTML = ''; // En modo lista, puede estar vacío inicialmente
+    if (currentPathElement) currentPathElement.textContent = '/';
 }
 
 function setViewMode(mode) {
@@ -483,6 +501,9 @@ function setViewMode(mode) {
 
     if (gridViewContainer && listViewContainer && gridBtn && listBtn) {
         const currentFolder = document.getElementById('current-path').textContent.substring(1) || '';
+        const isActiveViewChanging = (mode === 'grid' && gridViewContainer.classList.contains('hidden')) ||
+            (mode === 'list' && listViewContainer.classList.contains('hidden'));
+
         if (mode === 'grid') {
             gridViewContainer.classList.remove('hidden');
             listViewContainer.classList.add('hidden');
@@ -498,22 +519,42 @@ function setViewMode(mode) {
             gridBtn.classList.add('text-gray-600', 'hover:bg-blue-50');
             gridBtn.classList.remove('bg-blue-100', 'text-blue-600');
         }
-        // Volver a cargar los archivos de la carpeta actual para que se rendericen en la nueva vista
-        if (currentFolder) {
-            loadFiles(currentFolder);
-        } else {
-            // Si no hay carpeta seleccionada (ej. al inicio), limpiar vistas o mostrar mensaje
-            gridViewContainer.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta.</p>';
-            listViewContainer.innerHTML = ''; // Limpiar la otra vista
+
+        // Volver a cargar los archivos de la carpeta actual SOLO si la vista está cambiando y hay contenido
+        // o si una de las vistas está vacía y debería tener contenido.
+        const gridIsEmpty = gridViewContainer.innerHTML.includes('Seleccione una carpeta') || gridViewContainer.innerHTML.includes('Esta carpeta está vacía') || gridViewContainer.innerHTML === '';
+        const listIsEmpty = listViewContainer.innerHTML.includes('Seleccione una carpeta') || listViewContainer.innerHTML.includes('Esta carpeta está vacía') || listViewContainer.innerHTML === '';
+
+        if (isActiveViewChanging && ((mode === 'grid' && gridIsEmpty && !listIsEmpty) || (mode === 'list' && listIsEmpty && !gridIsEmpty) || !gridIsEmpty || !listIsEmpty)) {
+            // Si hay una carpeta seleccionada (no es la raíz inicial sin selección)
+            if (document.getElementById('current-path').textContent !== '/' || (currentFolder === '' && fileCache[`files--name-asc`])) {
+                loadFiles(currentFolder, currentSortOrder.column, currentSortOrder.direction);
+            } else if (currentFolder === '' && !fileCache[`files--name-asc`]) {
+                // Caso inicial, raíz, sin archivos cargados aún en caché
+                loadFiles('', currentSortOrder.column, currentSortOrder.direction);
+            } else {
+                // No hacer nada o limpiar si es el estado inicial sin selección
+                if (mode === 'grid') gridViewContainer.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta.</p>';
+                if (mode === 'list') listViewContainer.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta.</p>';
+            }
         }
+    } else {
+        console.error('Error: No se pudieron encontrar los elementos para cambiar la vista.');
     }
 }
 
 function toggleFileSelection(fileId) {
     console.log(`toggleFileSelection llamado para: ${fileId}`);
     // Implementar lógica de selección de archivos
+    // Por ejemplo, añadir una clase 'selected' al elemento
+    const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+    if (fileElement) {
+        fileElement.classList.toggle('ring-2');
+        fileElement.classList.toggle('ring-blue-500');
+        fileElement.classList.toggle('shadow-xl');
+    }
 }
 
-// Si no estás usando módulos, la función initAxFinder ya está en el ámbito global.
-// Si en el futuro decides volver a usar módulos, necesitarías exportarla:
-// export { initAxFinder };
+// No es necesario exportar initAxFinder si no se usan módulos y el script se carga globalmente.
+// El DOMContentLoaded ya llama a initAxFinder.
+// ... existing code ...

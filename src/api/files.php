@@ -138,19 +138,7 @@ try {
 
             $itemFullPath = $directoryToScan . DIRECTORY_SEPARATOR . $item;
             if (is_dir($itemFullPath)) {
-                // Simplificación temporal: usar siempre el icono por defecto para carpetas
-                $iconSvg = $axFinderConfig['icons']['folderClosed'] ?? '<svg>fallback</svg>'; // Fallback simple si folderClosed no existe
-
-                // Comprobación adicional por si el nombre del item es problemático como clave
-                // if (isset($axFinderConfig['icons'][$item])) {
-                //     $iconSvg = $axFinderConfig['icons'][$item];
-                // } elseif (isset($axFinderConfig['icons']['folderClosed'])) {
-                //     $iconSvg = $axFinderConfig['icons']['folderClosed'];
-                // } else {
-                //     error_log("[list_folders] No se encontró icono para '$item' ni 'folderClosed'. Usando fallback SVG vacío.");
-                //     $iconSvg = ''; // Fallback si no hay icono específico ni general
-                // }
-
+                $iconSvg = $axFinderConfig['icons']['folderClosed'] ?? '<svg>fallback</svg>';
                 $folders[] = [
                     'name' => $item,
                     'type' => 'folder',
@@ -159,6 +147,8 @@ try {
                 ];
             }
         }
+        // Si no se encontraron carpetas, se devuelve un array vacío igualmente.
+        // El frontend deberá manejar el caso de un array de carpetas vacío.
         ResponseHandler::json(['success' => true, 'folders' => $folders]);
 
     } catch (Throwable $e) { // Capturar Throwable para errores y excepciones
@@ -179,10 +169,12 @@ try {
     // Validar que $folderName no contenga caracteres peligrosos (ej. '..', '/', '\') para evitar Path Traversal
     // y asegurar que la ruta resuelta esté dentro de $baseDir.
     $folderPath = $baseDir . DIRECTORY_SEPARATOR . $folderName;
-    if (strpos($folderName, '..') !== false ||
-        preg_match('/(?:\\\\|\/)/', $folderName) ||
-        realpath($folderPath) === false ||
-        strpos(realpath($folderPath), realpath($baseDir)) !== 0
+    // Se permite que $folderName contenga separadores de directorio ('/' o '\').
+    // La validación principal se hace con realpath() para asegurar que la ruta final
+    // esté dentro de $baseDir y no contenga '..'.
+    if (strpos($folderName, '..') !== false || // Prevenir secuencias '..' explícitas
+        realpath($folderPath) === false || // La ruta debe ser válida
+        strpos(realpath($folderPath), realpath($baseDir)) !== 0 // La ruta debe estar dentro de $baseDir
        ) {
         error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
         ResponseHandler::error('Nombre de carpeta inválido.', 400);
@@ -220,41 +212,29 @@ try {
             continue;
         }
         $itemPath = $targetDir . DIRECTORY_SEPARATOR . $item;
-        $fileType = is_dir($itemPath) ? 'folder' : 'file';
-        $iconSvg = '';
+        // Solo procesar si es un archivo
+        if (is_file($itemPath)) {
+            $iconSvg = $axFinderConfig['icons']['defaultFile'] ?? ''; // Icono por defecto para archivos
 
-        if ($fileType === 'folder') {
-            // Para carpetas, intentar obtener el icono específico por nombre de carpeta
-            $iconSvg = $axFinderConfig['icons'][$item] ?? $axFinderConfig['icons']['folderClosed'] ?? '';
-        } else {
-            // Para archivos, usar el icono por defecto para archivos
-            // (La lógica anterior de iconos por extensión ha sido eliminada según la solicitud)
-            $iconSvg = $axFinderConfig['icons']['defaultFile'] ?? '';
-        }
+            $fileData = [
+                'name' => $item,
+                'type' => 'file', // Solo se procesan archivos
+                'size' => formatFileSize(filesize($itemPath)),
+                'icon' => $iconSvg,
+            ];
 
-        $fileData = [
-            'name' => $item,
-            'type' => $fileType,
-            'size' => $fileType === 'file' ? formatFileSize(filesize($itemPath)) : null,
-            'icon' => $iconSvg, // Añadir el SVG del icono directamente
-        ];
-
-        if ($fileType === 'file') {
             $extension = strtolower(pathinfo($item, PATHINFO_EXTENSION));
             $imageBasePath = $axFinderConfig['general']['imageBasePath'] ?? './storage/';
             if (substr($imageBasePath, -1) !== '/') {
                 $imageBasePath .= '/';
             }
 
-            // Determinar si es una imagen basándose en una lista predefinida de extensiones de imagen
-            // ya que 'fileTypes' fue comentado/eliminado de la config.
             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
             if (in_array($extension, $imageExtensions)) {
                 $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
             }
+            $items[] = $fileData;
         }
-
-        $items[] = $fileData;
     }
     ResponseHandler::json(['success' => true, 'items' => $items, 'folder' => $folderName]);
 
