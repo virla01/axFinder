@@ -10,3 +10,9 @@ Tambien puede ser implementada en cualquier framework, solo modificando la confi
 # Los comentarios deben ser claros y explicativos, para que sea facil de entender. No agregar comentarios que no sean necesarios.
 # Los console para ver errores deben ser eliminados una vez que se soluciono todo.
 # Cuando llames a un archivo verifica que exista, al igual que alguna funcion, revisa que exista o que tiene otro nombre, cuanto mas rapido mejor, piedo tiempo hermoso, esperando que vos atiendas a otras personas.
+
+### El INDEX.HTML va asi, sin nada mas.
+<div id="axfinder" class="border border-blue-200" style="height: 600px;"></div>
+<script src="axfinder.js" defer></script>
+
+EL TEMPLATE ESTA DE EN LA CARPETA TEMPLATES, NO EN OTRO LADO.

@@ -1,5 +1,5 @@
 // src/js/fileDisplay.js
-console.log('src/js/fileDisplay.js cargado');
+
 
 import { UIElements } from './uiElements.js';
 import { api } from './apiService.js';
@@ -9,9 +9,9 @@ import { config, currentSortOrder, fileCache } from './config.js'; // Importar c
 let currentViewMode = 'grid'; // 'grid' o 'list'
 
 export function setViewMode(mode) {
-    console.log(`[FileDisplay] Cambiando modo de vista a: ${mode}`);
+
     currentViewMode = mode;
-    const filesContainer = UIElements.filesContainer();
+    const filesContainer = UIElements.fileDisplayArea();
     if (filesContainer) {
         filesContainer.className = mode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4' : 'p-4';
         // Volver a renderizar los archivos cacheados con la nueva vista
@@ -26,13 +26,13 @@ export function setViewMode(mode) {
 }
 
 export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrder = currentSortOrder.direction) {
-    console.log(`[FileDisplay] Cargando archivos para: ${path}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
-    const filesContainer = UIElements.filesContainer();
-    // const itemsCountDisplay = UIElements.itemsCountDisplay(); // Eliminado
+
+    const filesContainer = UIElements.fileDisplayArea();
+
     // const currentFolderDisplay = UIElements.currentFolderDisplay(); // Eliminado
 
-    if (!filesContainer /*|| !itemsCountDisplay || !currentFolderDisplay*/) { // Modificada la condición
-        console.error('[FileDisplay] Contenedor de archivos (filesContainer) no encontrado.');
+    if (!filesContainer || !currentFolderDisplay) { // Modificada la condición
+
         return;
     }
 
@@ -44,11 +44,11 @@ export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrde
 
     try {
         const data = await api.fetchFiles(path, sortBy, sortOrder);
-        console.log('[FileDisplay] Archivos recibidos:', data);
-        if (data.files && Array.isArray(data.files)) {
-            fileCache.set(path, data.files); // Guardar en caché
-            renderFiles(data.files, path);
-            // itemsCountDisplay.textContent = `${data.files.length} elementos`; // Eliminado
+
+        if (data.items && Array.isArray(data.items)) { // Cambiado de data.files a data.items
+            fileCache.set(path, data.items); // Guardar en caché
+            renderFiles(data.items, path);
+
             currentSortOrder.column = sortBy;
             currentSortOrder.direction = sortOrder;
         } else {
@@ -57,13 +57,13 @@ export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrde
     } catch (error) {
         console.error('[FileDisplay] Error al cargar archivos:', error);
         filesContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error al cargar archivos: ${error.message}</div>`;
-        // itemsCountDisplay.textContent = '0 elementos'; // Eliminado
+
     }
 }
 
 function renderFiles(files, currentPath) {
     console.log(`[FileDisplay] Renderizando ${files.length} archivos en modo ${currentViewMode}`);
-    const filesContainer = UIElements.filesContainer();
+    const filesContainer = UIElements.fileDisplayArea();
     if (!filesContainer) {
         console.error('[FileDisplay] Contenedor de archivos no encontrado para renderizar.');
         return;
@@ -86,16 +86,16 @@ function renderFiles(files, currentPath) {
 
             // const icon = getFileIcon(file, true); // true para grid view
             const icon = ''; // Placeholder
-            const imgElement = document.createElement('img');
-            imgElement.src = icon;
-            imgElement.alt = file.type; // Mantener alt text
-            imgElement.className = 'w-16 h-16 object-contain mb-2'; // Ajustado para mejor visualización
+            // const imgElement = document.createElement('img');
+            // imgElement.src = icon;
+            // imgElement.alt = file.type; // Mantener alt text
+            // imgElement.className = 'w-16 h-16 object-contain mb-2'; // Ajustado para mejor visualización
 
             const nameElement = document.createElement('span');
             nameElement.className = 'text-sm font-medium text-gray-700';
             nameElement.textContent = file.name;
 
-            fileElement.appendChild(imgElement);
+            // fileElement.appendChild(imgElement);
             fileElement.appendChild(nameElement);
             filesContainer.appendChild(fileElement);
         });

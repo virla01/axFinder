@@ -1,0 +1,9 @@
+    const gridBtn = document.getElementById('grid-btn');
+    if (gridBtn) {
+        gridBtn.addEventListener('click', () => setViewMode('grid'));
+    }
+
+    const listBtn = document.getElementById('list-btn');
+    if (listBtn) {
+        listBtn.addEventListener('click', () => setViewMode('list'));
+    }

@@ -1,5 +1,5 @@
 // src/js/uiElements.js
-console.log('src/js/uiElements.js cargado');
+
 
 // Contenedor principal de AxFinder, se pasará en la inicialización
 let _axFinderContainerId = null;
@@ -40,7 +40,7 @@ export const UIElements = {
     // Método para establecer el ID del contenedor principal
     setAxFinderContainerId: (id) => {
         _axFinderContainerId = id;
-        console.log(`[UIElements] ID del contenedor principal establecido a: ${_axFinderContainerId}`);
+
     },
     axFinderContainer: (id) => {
         // Si se pasa un id, se usa ese. Si no, el global.
@@ -70,9 +70,9 @@ export const UIElements = {
     // --- Main Content Area ---
     mainContentArea: () => getElement('#ax-main-content'),
     // currentFolderDisplay: () => getElement('#current-folder-display'), // Eliminado
-    // itemsCountDisplay: () => getElement('#items-count-display'), // Eliminado
+
     // Contenedores para las vistas de archivos
-    fileDisplayArea: () => getElement('#file-display-area'), // Contenedor principal para grid/list
+    fileDisplayArea: () => getElement('#file-view'), // Contenedor principal para grid/list
     fileGrid: () => getElement('#file-grid'), // Contenedor específico para la vista de cuadrícula
     fileList: () => getElement('#file-list'), // Contenedor específico para la vista de lista
 

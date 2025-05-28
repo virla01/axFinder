@@ -139,11 +139,26 @@ try {
             $itemFullPath = $directoryToScan . DIRECTORY_SEPARATOR . $item;
             if (is_dir($itemFullPath)) {
                 $iconSvg = $axFinderConfig['icons']['folderClosed'] ?? '<svg>fallback</svg>';
+                $hasSubfolders = false;
+                // Check if the folder has any subdirectories
+                $subItems = scandir($itemFullPath);
+                if ($subItems !== false) {
+                    foreach ($subItems as $subItem) {
+                        if ($subItem === '.' || $subItem === '..') {
+                            continue;
+                        }
+                        if (is_dir($itemFullPath . DIRECTORY_SEPARATOR . $subItem)) {
+                            $hasSubfolders = true;
+                            break;
+                        }
+                    }
+                }
                 $folders[] = [
                     'name' => $item,
                     'type' => 'folder',
                     'path' => !empty($currentPath) ? $currentPath . '/' . $item : $item,
-                    'icon' => $iconSvg
+                    'icon' => $iconSvg,
+                    'hasSubfolders' => $hasSubfolders
                 ];
             }
         }
@@ -166,22 +181,24 @@ try {
         exit;
     }
 
-    // Validar que $folderName no contenga caracteres peligrosos (ej. '..', '/', '\') para evitar Path Traversal
+    $targetDir = $baseDir; // Por defecto, escanear el baseDir
+
+    // Si el folderName no es 'storage' (que ya es el baseDir), entonces construir la ruta completa.
+    // Esto permite que 'storage' se refiera a la raíz definida en $baseDir.
+    if ($folderName !== 'storage') {
+        $targetDir = $baseDir . DIRECTORY_SEPARATOR . $folderName;
+    }
+
+    // Validar que $targetDir no contenga caracteres peligrosos (ej. '..', '/', '\') para evitar Path Traversal
     // y asegurar que la ruta resuelta esté dentro de $baseDir.
-    $folderPath = $baseDir . DIRECTORY_SEPARATOR . $folderName;
-    // Se permite que $folderName contenga separadores de directorio ('/' o '\').
-    // La validación principal se hace con realpath() para asegurar que la ruta final
-    // esté dentro de $baseDir y no contenga '..'.
-    if (strpos($folderName, '..') !== false || // Prevenir secuencias '..' explícitas
-        realpath($folderPath) === false || // La ruta debe ser válida
-        strpos(realpath($folderPath), realpath($baseDir)) !== 0 // La ruta debe estar dentro de $baseDir
+    if (strpos($folderName, '..') !== false || // Prevenir secuencias '..' explícitas en el nombre original
+        realpath($targetDir) === false || // La ruta debe ser válida
+        strpos(realpath($targetDir), realpath($baseDir)) !== 0 // La ruta debe estar dentro de $baseDir
        ) {
         error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
         ResponseHandler::error('Nombre de carpeta inválido.', 400);
         exit;
     }
-
-    $targetDir = $baseDir . DIRECTORY_SEPARATOR . $folderName;
 
     if (!is_dir($targetDir) || !is_readable($targetDir)) {
         ResponseHandler::error("La carpeta '{$folderName}' no es accesible o no existe.", 404);
@@ -231,7 +248,12 @@ try {
 
             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
             if (in_array($extension, $imageExtensions)) {
-                $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
+                // Si el folderName es 'storage', no lo duplicamos en la URL
+                if ($folderName === 'storage') {
+                    $fileData['imageUrl'] = $imageBasePath . rawurlencode($item);
+                } else {
+                    $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
+                }
             }
             $items[] = $fileData;
         }

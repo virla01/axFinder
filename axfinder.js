@@ -1,77 +1,71 @@
-export const axFinderHTML = `
-    <div class="w-full h-full flex">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white border-r border-blue-200 flex flex-col">
-            <div class="p-4 border-b border-blue-200 flex justify-center items-center">
-                <img src="src/images/axFinder-800.png" alt="Logo de AxFinder" class="w-auto h-[2.6rem]" />
-            </div>
-            <div class="flex-1 overflow-y-auto py-2 pl-2">
-                <div class="space-y-1">
-                    <div class="flex items-center p-2 mb-2 hover:bg-blue-100 cursor-pointer text-sm transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-auto h-5"><path class="fill-blue-600" d="M570.24 247.41L512 199.52V104a8 8 0 0 0-8-8h-32a8 8 0 0 0-7.95 7.88v56.22L323.87 45a56.06 56.06 0 0 0-71.74 0L5.76 247.41a16 16 0 0 0-2 22.54L14 282.25a16 16 0 0 0 22.53 2L64 261.69V448a32.09 32.09 0 0 0 32 32h128a32.09 32.09 0 0 0 32-32V344h64v104a32.09 32.09 0 0 0 32 32h128a32.07 32.07 0 0 0 32-31.76V261.67l27.53 22.62a16 16 0 0 0 22.53-2L572.29 270a16 16 0 0 0-2.05-22.59zM463.85 432H368V328a32.09 32.09 0 0 0-32-32h-96a32.09 32.09 0 0 0-32 32v104h-96V222.27L288 77.65l176 144.56z" class=""></path></svg>
-                        <span class="text-gray-800 font-bold ml-2">Inicio</span>
-                    </div>
-                    <div id="sidebar-folders-container" class="space-y-1 ml-5">
-                        <!-- Las carpetas se cargarán aquí dinámicamente -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Fin Sidebar -->
+// axfinder.js - Punto de entrada principal para AxFinder
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <!-- Toolbar -->
-            <div class="bg-white border-b border-blue-200 p-4 flex items-center justify-between">
-                <div class="flex items-center">
-                    <button class="inline-flex items-center justify-center py-2 px-4 transition-colors active:bg-blue-100 rounded-full hover:bg-blue-800/5" id="create-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4 mr-2"><path  class="fill-blue-500" d="M464,128H272L217.37,73.37A32,32,0,0,0,194.74,64H48A48,48,0,0,0,0,112V400a48,48,0,0,0,48,48H464a48,48,0,0,0,48-48V176A48,48,0,0,0,464,128Zm0,272H48V112H188.12l54.63,54.63A32,32,0,0,0,265.38,176H464ZM247.5,208a16,16,0,0,0-16,16v40H192a16,16,0,0,0-16,16v16a16,16,0,0,0,16,16h39.5v40a16,16,0,0,0,16,16h16a16,16,0,0,0,16-16V312H320a16,16,0,0,0,16-16V280a16,16,0,0,0-16-16H279.5V224a16,16,0,0,0-16-16Z"></path></svg>
-                        <span>Nueva carpeta</span>
-                    </button>
-                </div>
-                <div class="flex items-center">
-                    <div class="relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4 absolute left-3 top-3.5"><path class="fill-blue-500" d="M508.5 468.9L387.1 347.5c-2.3-2.3-5.3-3.5-8.5-3.5h-13.2c31.5-36.5 50.6-84 50.6-136C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c52 0 99.5-19.1 136-50.6v13.2c0 3.2 1.3 6.2 3.5 8.5l121.4 121.4c4.7 4.7 12.3 4.7 17 0l22.6-22.6c4.7-4.7 4.7-12.3 0-17zM208 368c-88.4 0-160-71.6-160-160S119.6 48 208 48s160 71.6 160 160-71.6 160-160 160z"></path></svg>
-                        <input type="text" placeholder="Buscar archivos..."
-                            class="pl-10 pr-4 text-base py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white text-gray-900 placeholder-gray-500" />
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button class="p-2 transition-colors bg-blue-100 rounded-full hover:bg-blue-800/5" id="grid-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path class="fill-blue-500" d="M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zM197.3 72h117.3v96H197.3zm0 136h117.3v96H197.3zm-40 232H52c-6.6 0-12-5.4-12-12v-84h117.3zm0-136H40v-96h117.3zm0-136H40V84c0-6.6 5.4-12 12-12h105.3zm157.4 272H197.3v-96h117.3v96zm157.3 0H354.7v-96H472zm0-136H354.7v-96H472zm0-136H354.7V72H472z"></path></svg>
-                    </button>
-                    <button class="p-2 transition-colors rounded-full hover:bg-blue-800/5" id="list-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path class="fill-blue-500" d="M80 48H16A16 16 0 0 0 0 64v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16V64a16 16 0 0 0-16-16zm0 160H16a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64a16 16 0 0 0-16-16zm0 160H16a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64a16 16 0 0 0-16-16zm416-136H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16v-16a16 16 0 0 0-16-16zm0 160H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16v-16a16 16 0 0 0-16-16zm0-320H176a16 16 0 0 0-16 16v16a16 16 0 0 0 16 16h320a16 16 0 0 0 16-16V88a16 16 0 0 0-16-16z"></path></svg>
-                    </button>
-                    <button class="p-2 transition-colors rounded-full hover:bg-blue-800/5" id="config-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path class="fill-blue-500" d="M452.515 237l31.843-18.382c9.426-5.441 13.996-16.542 11.177-27.054-11.404-42.531-33.842-80.547-64.058-110.797-7.68-7.688-19.575-9.246-28.985-3.811l-31.785 18.358a196.276 196.276 0 0 0-32.899-19.02V39.541a24.016 24.016 0 0 0-17.842-23.206c-41.761-11.107-86.117-11.121-127.93-.001-10.519 2.798-17.844 12.321-17.844 23.206v36.753a196.276 196.276 0 0 0-32.899 19.02l-31.785-18.358c-9.41-5.435-21.305-3.877-28.985 3.811-30.216 30.25-52.654 68.265-64.058 110.797-2.819 10.512 1.751 21.613 11.177 27.054L59.485 237a197.715 197.715 0 0 0 0 37.999l-31.843 18.382c-9.426 5.441-13.996 16.542-11.177 27.054 11.404 42.531 33.842 80.547 64.058 110.797 7.68 7.688 19.575 9.246 28.985 3.811l31.785-18.358a196.202 196.202 0 0 0 32.899 19.019v36.753a24.016 24.016 0 0 0 17.842 23.206c41.761 11.107 86.117 11.122 127.93.001 10.519-2.798 17.844-12.321 17.844-23.206v-36.753a196.34 196.34 0 0 0 32.899-19.019l31.785 18.358c9.41 5.435 21.305 3.877 28.985-3.811 30.216-30.25 52.654-68.266 64.058-110.797 2.819-10.512-1.751-21.613-11.177-27.054L452.515 275c1.22-12.65 1.22-25.35 0-38zm-52.679 63.019l43.819 25.289a200.138 200.138 0 0 1-33.849 58.528l-43.829-25.309c-31.984 27.397-36.659 30.077-76.168 44.029v50.599a200.917 200.917 0 0 1-67.618 0v-50.599c-39.504-13.95-44.196-16.642-76.168-44.029l-43.829 25.309a200.15 200.15 0 0 1-33.849-58.528l43.819-25.289c-7.63-41.299-7.634-46.719 0-88.038l-43.819-25.289c7.85-21.229 19.31-41.049 33.849-58.529l43.829 25.309c31.984-27.397 36.66-30.078 76.168-44.029V58.845a200.917 200.917 0 0 1 67.618 0v50.599c39.504 13.95 44.196 16.642 76.168 44.029l43.829-25.309a200.143 200.143 0 0 1 33.849 58.529l-43.819 25.289c7.631 41.3 7.634 46.718 0 88.037zM256 160c-52.935 0-96 43.065-96 96s43.065 96 96 96 96-43.065 96-96-43.065-96-96-96zm0 144c-26.468 0-48-21.532-48-48 0-26.467 21.532-48 48-48s48 21.533 48 48c0 26.468-21.532 48-48 48z" class=""></path></svg>
-                    </button>
-                </div>
-            </div>
-            <!-- Fin Toolbar -->
+import { loadFolders } from './src/js/loadFolder.js';
+import { loadFiles } from './src/js/loadFile.js';
+import { icons, currentSortOrder } from './src/js/config.js';
 
-            <!-- Main Content Area -->
-            <div class="flex-1 p-4 overflow-auto bg-blue-50" id="main-content-area">
-                <div id="file-view">
-                    <!-- Vista de archivos (Grid o Lista) se renderizará aquí -->
-                    <div id="grid-view-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                        <!-- Contenido se genera dinámicamente -->
-                    </div>
-                    <div id="list-view-container" class="space-y-2 hidden">
-                        <!-- Contenido se genera dinámicamente -->
-                    </div>
-                </div>
-            </div>
-            <!-- Fin Main Content Area -->
-        </div>
-        <!-- Fin Main Content -->
-    </div>
+/**
+ * Carga el template HTML principal de AxFinder y lo inyecta en el contenedor especificado.
+ * @param {HTMLElement} containerElement - El elemento contenedor donde se cargará AxFinder.
+ * @param {string} templatePath - La ruta al archivo de plantilla HTML.
+ */
+async function initializeAxFinder(containerElement, templatePath = 'src/template/ax-template.html') {
+    try {
+        const response = await fetch(templatePath);
+        if (!response.ok) {
+            throw new Error(`Error al cargar el template: ${response.status} ${response.statusText}`);
+        }
+        const htmlTemplate = await response.text();
 
-    <!--Footer -->
-    <div class="flex items-center justify-between border-t-1 border-blue-200">
-        <!-- Botón de prueba de API (temporalmente aquí) -->
-        <button id="ax-test-button" style="margin: 10px; padding: 5px; border: 1px solid blue;">Probar Conexión API</button>
-        <div id="ax-status" style="margin: 10px;">Estado: Desconocido</div>
-    </div>
-    <!--Fin Footer-- >
-    `;
+        if (!containerElement) {
+            console.error('El elemento contenedor no fue proporcionado o no es válido.');
+            return;
+        }
+        containerElement.innerHTML = htmlTemplate;
+
+        // Cargar las carpetas iniciales
+        await loadFolders();
+        await loadFiles('storage', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio 'storage' al inicio
+        console.log('AxFinder inicializado, template cargado y carpetas solicitadas.');
+
+        // Ejemplo de cómo podrías llamar a otras funciones de inicialización modular
+        import('./src/js/folderNavigation.js').then(module => module.loadFolders()); // Cambiado a loadFolders
+        // import('./src/js/fileDisplay.js').then(module => module.initFileDisplay());
+        // import('./src/js/uiElements.js').then(module => module.initUIElements());
+        // import('./src/js/apiService.js').then(module => module.initApiService());
+
+    } catch (error) {
+        console.error('Error durante la inicialización de AxFinder:', error);
+        if (containerElement) {
+            containerElement.innerHTML = `<p style="color: red; padding: 1rem;">Error al cargar AxFinder: ${error.message}</p>`;
+        }
+    }
+}
+
+// Auto-inicialización al cargar el script
+document.addEventListener('DOMContentLoaded', () => {
+    // Priorizar el ID 'axfinder' según las instrucciones del usuario
+    let container = document.getElementById('axfinder');
+
+    // Fallback a data-axfinder-container si 'axfinder' no existe
+    if (!container) {
+        container = document.querySelector('[data-axfinder-container]');
+    }
+
+    // Fallback a un elemento con el ID 'axfinder' (esto es redundante si el primero lo encuentra, pero mantenido por si acaso)
+    // y para mantener la compatibilidad con versiones anteriores que pudieran buscar solo el ID.
+    if (!container && document.getElementById('axfinder')) {
+        console.warn("AxFinder: Se encontró un contenedor con ID 'axfinder', pero se recomienda usar el atributo 'data-axfinder-container' para mayor flexibilidad o asegurar que el ID 'axfinder' sea el principal.");
+        container = document.getElementById('axfinder');
+    }
+
+    if (container) {
+        console.log("AxFinder: Contenedor encontrado, inicializando AxFinder.", container);
+        initializeAxFinder(container);
+    } else {
+        console.error("AxFinder: No se encontró ningún contenedor adecuado (ID 'axfinder' o atributo 'data-axfinder-container') para inicialización.");
+    }
+});
+
+// Exportar para posible inicialización manual si es necesario
+export { initializeAxFinder };
