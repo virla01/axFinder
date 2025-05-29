@@ -1,4 +1,5 @@
 import { loadFiles } from './loadFile.js';
+import { LOADING_SPINNER_HTML } from './uiElements.js';
 import { currentSortOrder, icons } from './config.js'; // Necesario para los parámetros de loadFiles si se usan e iconos
 
 export function loadFolders() {
@@ -27,15 +28,7 @@ export function loadFolders() {
         console.error('Error: No se encontró el contenedor de carpetas del sidebar.');
         return;
     }
-    foldersContainer.innerHTML = `
-        <div class="flex items-center justify-center p-4">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-sm text-gray-600">Cargando directorios...</p>
-        </div>
-    `;
+    foldersContainer.innerHTML = LOADING_SPINNER_HTML.replace('Cargando archivos...', 'Cargando directorios...');
 
     fetch('src/api/files.php?action=list_folders')
         .then(response => {

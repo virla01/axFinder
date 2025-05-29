@@ -1,7 +1,74 @@
 @import "tailwindcss";
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+.sidebar-content {
+	@apply flex flex-col w-64 bg-white border-r border-blue-200;
+}
+
+.sidebar-item-logo {
+	@apply flex items-center justify-center p-4 border-b border-blue-200;
+}
+
+.logo {
+	@apply w-auto h-[2.6rem];
+}
+
+.sidebar-item-inicio {
+	@apply flex-1 py-2 pl-2 overflow-y-auto;
+}
+
+.main-content {
+	@apply flex flex-col flex-1;
+}
+
+.main-content-toolbar {
+	@apply flex items-center justify-between p-4 bg-white border-b border-blue-200;
+}
+
+.toolbar-left-group {
+	@apply flex items-center;
+}
+
+.toolbar-left-group {
+	@apply flex items-center;
+}
+
+.toolbar-right-group {
+	@apply flex items-center space-x-2;
+}
+
+.search-input {
+	@apply py-2 pl-10 pr-4 text-base text-gray-900 placeholder-gray-500 transition-colors bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.main-content-area {
+	@apply flex-1 p-4 overflow-auto bg-blue-50;
+}
+
+.footer {
+	@apply flex items-center justify-between p-2 border-blue-200 border-t-1;
+}
+
+
+/* varios */
 .ax-primary,
 .ax-secondary {
-	@apply fill-blue-600 w-auto h-5;
+	@apply w-auto h-5 fill-blue-600;
+}
+
+.btn {
+	@apply inline-flex items-center justify-center px-4 py-2 transition-colors;
+}
+
+.btn-rounded {
+	@apply rounded-full;
+}
+
+.btn-rounded-full {
+	@apply p-2 rounded-full;
+}
+
+.btn-rounded:hover,
+.btn-rounded-full:hover {
+	@apply bg-blue-800/5;
 }

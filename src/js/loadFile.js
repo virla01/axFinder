@@ -1,4 +1,6 @@
-export function loadFiles(folderName = '', sortBy = 'name', sortOrder = 'asc') {
+import { LOADING_SPINNER_HTML } from './uiElements.js';
+
+function loadFiles(folderName = '', sortBy = 'name', sortOrder = 'asc') {
     const fileView = document.getElementById('file-view');
 
     if (!fileView) { // Actualizado
@@ -23,14 +25,15 @@ export function loadFiles(folderName = '', sortBy = 'name', sortOrder = 'asc') {
 
     // Mostrar indicador de carga en el contenedor activo
     if (!gridViewContainer.classList.contains('hidden')) {
-        gridViewContainer.innerHTML = '<p class="p-4 text-gray-500">Cargando archivos...</p>';
+        gridViewContainer.innerHTML = LOADING_SPINNER_HTML;
     } else if (!listViewContainer.classList.contains('hidden')) {
-        listViewContainer.innerHTML = '<p class="p-4 text-gray-500">Cargando archivos...</p>';
+        listViewContainer.innerHTML = LOADING_SPINNER_HTML;
     } else { // Si ambos están ocultos (estado inicial o error), ponerlo en grid por defecto
-        gridViewContainer.innerHTML = '<p class="p-4 text-gray-500">Cargando archivos...</p>';
+        gridViewContainer.innerHTML = LOADING_SPINNER_HTML;
     }
 
-    fetch(`./src/api/files.php?action=list_files&folder=${encodeURIComponent(folderName)}&sortBy=${sortBy}&sortOrder=${sortOrder}`)
+    const folderParam = folderName === '' ? '.' : folderName;
+    fetch(`./src/api/files.php?action=list_files&folder=${encodeURIComponent(folderParam)}&sortBy=${sortBy}&sortOrder=${sortOrder}`)
         .then(response => {
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.indexOf('application/json') !== -1) {
@@ -137,7 +140,7 @@ export function loadFiles(folderName = '', sortBy = 'name', sortOrder = 'asc') {
                     if (item.type === 'folder') {
                         listIconHtml = `<div class="w-6 h-6 text-blue-500 flex items-center justify-center">${itemIconSvg}</div>`;
                         listItem.addEventListener('click', () => {
-                            const newPath = `${folderName ? folderName + '/' : ''}${item.name}`;
+                            const newPath = folderName === '.' ? item.name : `${folderName}/${item.name}`;
                             loadFiles(newPath);
                         });
                     } else if (item.imageUrl) {
@@ -178,6 +181,8 @@ export function loadFiles(folderName = '', sortBy = 'name', sortOrder = 'asc') {
         });
 }
 
+let currentSortOrder = { column: 'name', direction: 'asc' }; // Default sort order
+
 function clearFileView() {
     const fileView = document.getElementById('file-view');
     const currentPathElement = document.getElementById('current-path');
@@ -198,6 +203,8 @@ function setViewMode(mode) {
 
     if (gridViewContainer && listViewContainer && gridBtn && listBtn) {
         const currentFolderDisplayElement = document.getElementById('current-folder-display');
+        const currentPath = currentFolderDisplayElement ? currentFolderDisplayElement.textContent : '';
+
         const currentFolder = currentFolderDisplayElement ? currentFolderDisplayElement.textContent.substring(1) || '' : '';
         const isActiveViewChanging = (mode === 'grid' && gridViewContainer.classList.contains('hidden')) ||
             (mode === 'list' && listViewContainer.classList.contains('hidden'));
@@ -218,24 +225,19 @@ function setViewMode(mode) {
             gridBtn.classList.remove('bg-blue-100', 'text-blue-600');
         }
 
-        const gridIsEmpty = gridViewContainer.innerHTML.includes('Seleccione una carpeta') || gridViewContainer.innerHTML.includes('Esta carpeta está vacía') || gridViewContainer.innerHTML === '';
-        const listIsEmpty = listViewContainer.innerHTML.includes('Seleccione una carpeta') || listViewContainer.innerHTML.includes('Esta carpeta está vacía') || listViewContainer.innerHTML === '';
-
-        if (isActiveViewChanging && ((mode === 'grid' && gridIsEmpty && !listIsEmpty) || (mode === 'list' && listIsEmpty && !gridIsEmpty) || !gridIsEmpty || !listIsEmpty)) {
-            // Siempre recargar usando currentSortOrder al cambiar de vista si hay contenido o es la raíz
+        // If the view is actually changing, reload the files for the current folder
+        if (isActiveViewChanging) {
             const currentPathDisplay = document.getElementById('current-folder-display');
-            if (currentPathDisplay && (currentPathDisplay.textContent !== '/' || currentFolder === '')) {
-                loadFiles(currentFolder, currentSortOrder.column, currentSortOrder.direction);
-            } else {
-                if (mode === 'grid') gridViewContainer.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta.</p>';
-                if (mode === 'list') listViewContainer.innerHTML = '<p class="p-4 text-gray-500">Seleccione una carpeta.</p>';
+            let currentFolder = currentPathDisplay ? currentPathDisplay.textContent.substring(1) : '';
+            if (currentFolder === '/') {
+                currentFolder = ''; // Ensure it's empty for the root to be handled by loadFiles
             }
+            loadFiles(currentFolder, currentSortOrder.column, currentSortOrder.direction);
         }
     } else {
         console.error('Error: No se pudieron encontrar los elementos para cambiar la vista.');
     }
 }
-function toggleFileSelection(fileId) {
-    console.log(`toggleFileSelection llamado para: ${fileId}`);
-    // Implementar lógica de selección de archivos
-}
+
+// Exportar funciones necesarias
+export { loadFiles, clearFileView, setViewMode };

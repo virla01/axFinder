@@ -1,7 +1,7 @@
 // axfinder.js - Punto de entrada principal para AxFinder
 
 import { loadFolders } from './src/js/loadFolder.js';
-import { loadFiles } from './src/js/loadFile.js';
+import { loadFiles, setViewMode } from './src/js/loadFile.js';
 import { icons, currentSortOrder } from './src/js/config.js';
 
 /**
@@ -25,11 +25,23 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
 
         // Cargar las carpetas iniciales
         await loadFolders();
-        await loadFiles('storage', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio 'storage' al inicio
+        await loadFiles('.', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio raíz al inicio
         console.log('AxFinder inicializado, template cargado y carpetas solicitadas.');
 
-        // Ejemplo de cómo podrías llamar a otras funciones de inicialización modular
-        import('./src/js/folderNavigation.js').then(module => module.loadFolders()); // Cambiado a loadFolders
+        // Inicializar la vista por defecto y añadir event listeners a los botones de vista
+        setViewMode('grid');
+        const gridBtn = document.getElementById('grid-btn');
+        const listBtn = document.getElementById('list-btn');
+
+        if (gridBtn) {
+            gridBtn.addEventListener('click', () => setViewMode('grid'));
+        }
+
+        if (listBtn) {
+            listBtn.addEventListener('click', () => setViewMode('list'));
+        }
+
+        // No es necesario llamar a loadFolders aquí de nuevo, ya se hizo arriba.
         // import('./src/js/fileDisplay.js').then(module => module.initFileDisplay());
         // import('./src/js/uiElements.js').then(module => module.initUIElements());
         // import('./src/js/apiService.js').then(module => module.initApiService());
