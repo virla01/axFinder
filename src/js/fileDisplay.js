@@ -23,32 +23,43 @@ export function setViewMode(mode) {
     if (mode === 'grid') {
         gridViewContainer.classList.remove('hidden');
         listViewContainer.classList.add('hidden');
-        filesContainer.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4';
+        gridViewContainer.className = 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6';
+        listViewContainer.className = 'hidden';
+        filesContainer.className = 'p-4';
     } else if (mode === 'list') {
         listViewContainer.classList.remove('hidden');
         gridViewContainer.classList.add('hidden');
-        filesContainer.className = 'p-4 space-y-2'; // Quitar clases de grid, añadir espaciado para lista
+        listViewContainer.className = 'space-y-2';
+        gridViewContainer.className = 'hidden';
+        filesContainer.className = 'p-4';
     }
 
-    // Volver a renderizar los archivos cacheados con la nueva vista
-    const currentPath = config.currentPath || '.'; // Usar la ruta desde config, '.' para la raíz
+    const currentPath = config.currentPath || '.';
     if (fileCache.has(currentPath)) {
         renderFiles(fileCache.get(currentPath), currentPath);
     } else if (currentPath) {
-        // Si no está en caché pero tenemos una ruta, intentar cargarla de nuevo
         loadFiles(currentPath);
     }
 }
 
 export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrder = currentSortOrder.direction) {
     console.log(`[FileDisplay] loadFiles llamado con path: ${path}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
+
     const filesContainer = UIElements.fileDisplayArea();
-    const currentFolderDisplay = UIElements.currentFolderDisplay();
     const gridViewContainer = document.getElementById('grid-view-container');
     const listViewContainer = document.getElementById('list-view-container');
 
-    if (!filesContainer || !currentFolderDisplay || !gridViewContainer || !listViewContainer) {
-        console.error('[FileDisplay] Contenedores de archivos o ruta actual no encontrados.');
+    console.log("[FileDisplay DEBUG] Intentando obtener elementos:");
+    console.log("[FileDisplay DEBUG] UIElements.fileDisplayArea() (#file-view) encontró:", filesContainer);
+    console.log("[FileDisplay DEBUG] document.getElementById('grid-view-container') encontró:", gridViewContainer);
+    console.log("[FileDisplay DEBUG] document.getElementById('list-view-container') encontró:", listViewContainer);
+
+    if (!filesContainer || !gridViewContainer || !listViewContainer) {
+        console.error('[FileDisplay] Uno o más contenedores de vista de archivos (file-view, grid-view-container, list-view-container) no fueron encontrados. Estado:', {
+            esFilesContainerNulo: !filesContainer,
+            esGridViewContainerNulo: !gridViewContainer,
+            esListViewContainerNulo: !listViewContainer
+        });
         return;
     }
 
@@ -61,33 +72,33 @@ export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrde
         gridViewContainer.innerHTML = LOADING_SPINNER_HTML;
     } else if (!listViewContainer.classList.contains('hidden')) {
         listViewContainer.innerHTML = LOADING_SPINNER_HTML;
-    } else { // Si ambos están ocultos (estado inicial o error), ponerlo en grid por defecto
+    } else {
         gridViewContainer.innerHTML = LOADING_SPINNER_HTML;
     }
 
-    config.currentPath = path; // Guardar la ruta actual en config.js
+    config.currentPath = path;
 
     try {
         const data = await api.fetchFiles(path, sortBy, sortOrder);
 
-        if (data.success && data.items && Array.isArray(data.items)) { // Verificar success y items
-            fileCache.set(path, data.items); // Guardar en caché
-            renderFiles(data.items, path); // Renderizar con la ruta actual
+        if (data.success && data.items && Array.isArray(data.items)) {
+            fileCache.set(path, data.items);
+            renderFiles(data.items, path);
 
             currentSortOrder.column = sortBy;
             currentSortOrder.direction = sortOrder;
 
-            // Update the current-folder-display element
-            currentFolderDisplay.textContent = path === '' || path === '.' ? '/' : '/' + path;
-            currentFolderDisplay.dataset.path = path;
-
         } else {
             console.error('[FileDisplay] Error o respuesta inválida del servidor:', data.message || 'Respuesta no exitosa');
-            filesContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error al cargar archivos: ${data.message || 'Respuesta inválida del servidor'}</div>`;
+            if (filesContainer) {
+                filesContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error al cargar archivos: ${data.message || 'Respuesta inválida del servidor'}</div>`;
+            }
         }
     } catch (error) {
         console.error('[FileDisplay] Error en fetch al cargar archivos:', error);
-        filesContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error de conexión al cargar archivos: ${error.message}</div>`;
+        if (filesContainer) {
+            filesContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error de conexión al cargar archivos: ${error.message}</div>`;
+        }
     }
 }
 
@@ -124,8 +135,8 @@ function renderFiles(files, currentPath) {
         if (currentViewMode === 'grid') {
             // Crear elemento para la vista Grid
             const gridItem = document.createElement('div');
-            gridItem.className = 'file-item group bg-white p-3 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer flex flex-col items-center text-center';
-            gridItem.setAttribute('data-file-path', item.path); // Usar item.path
+            gridItem.className = 'p-4 transition-all bg-white border-2 border-blue-200 rounded-lg cursor-pointer hover:shadow-lg hover:border-blue-300 file-item group';
+            gridItem.setAttribute('data-file-path', item.path);
             gridItem.setAttribute('data-file-type', item.type);
 
             if (item.type === 'folder') {
@@ -134,55 +145,53 @@ function renderFiles(files, currentPath) {
                     ${folderIconHtml}
                     <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
                 `;
-            } else if (item.imageUrl) { // Si es una imagen y tiene imageUrl para la miniatura
-                // Aplicar el nuevo diseño para imágenes
-                gridItem.className = 'file-item group shadow hover:shadow-md transition-shadow cursor-pointer'; // Clases base del div principal
+            } else if (item.imageUrl) {
+                gridItem.className = 'transition-shadow shadow cursor-pointer file-item group hover:shadow-md';
 
                 const imgElement = document.createElement('img');
-                imgElement.src = item.imageUrl; // Usar imageUrl
+                imgElement.src = item.imageUrl;
                 imgElement.alt = item.name;
-                imgElement.className = 'w-full h-24 object-cover';
+                imgElement.className = 'object-cover w-full h-24';
                 gridItem.appendChild(imgElement);
 
                 const infoDiv = document.createElement('div');
-                infoDiv.className = 'bg-white p-3 rounded-b-lg flex flex-col items-center text-center h-18';
+                infoDiv.className = 'flex flex-col items-center p-3 text-center bg-white rounded-b-lg h-18';
 
                 const nameSpan = document.createElement('span');
-                nameSpan.className = 'text-sm font-medium text-gray-700 truncate w-full mt-1';
+                nameSpan.className = 'w-full mt-1 text-sm font-medium text-gray-700 truncate';
                 nameSpan.textContent = item.name;
                 infoDiv.appendChild(nameSpan);
 
                 if (item.size) {
                     const sizeSpan = document.createElement('span');
                     sizeSpan.className = 'text-xs text-gray-500';
-                    sizeSpan.textContent = item.size; // Usar item.size
+                    sizeSpan.textContent = item.size;
                     infoDiv.appendChild(sizeSpan);
                 }
                 gridItem.appendChild(infoDiv);
 
-            } else { // Para otros archivos, usar el SVG del icono genérico de archivo
+            } else {
                 const fileIconHtml = `<div class="w-16 h-16 text-gray-400 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
                 gridItem.innerHTML = `
                     ${fileIconHtml}
                     <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
-                    ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''} // Usar item.size
+                    ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''}
                 `;
             }
 
             itemsContainer.appendChild(gridItem);
 
         } else { // list view
-            // Crear elemento para la vista Lista
             const listItem = document.createElement('div');
             listItem.className = 'file-item-list group bg-white p-2.5 rounded-md shadow-sm hover:bg-blue-50 transition-colors cursor-pointer flex items-center space-x-3';
-            listItem.setAttribute('data-file-path', item.path); // Usar item.path
+            listItem.setAttribute('data-file-path', item.path);
             listItem.setAttribute('data-file-type', item.type);
 
             let listIconHtml = '';
             if (item.type === 'folder') {
                 listIconHtml = `<div class="flex-shrink-0 w-6 h-6 text-blue-500 flex items-center justify-center">${itemIconSvg}</div>`;
             } else if (item.imageUrl) {
-                listIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="flex-shrink-0 w-8 h-8 object-cover rounded">`; // Usar imageUrl
+                listIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="flex-shrink-0 w-8 h-8 object-cover rounded">`;
             } else {
                 listIconHtml = `<div class="flex-shrink-0 w-6 h-6 text-gray-400 flex items-center justify-center">${itemIconSvg}</div>`;
             }
@@ -191,10 +200,10 @@ function renderFiles(files, currentPath) {
                 ${listIconHtml}
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-800 truncate">${item.name}</p>
-                    <p class="text-xs text-gray-500 truncate">${item.type === 'folder' ? 'Carpeta' : 'Archivo'}${item.size ? ` - ${item.size}` : ''}</p> // Usar item.size
+                    <p class="text-xs text-gray-500 truncate">${item.type === 'folder' ? 'Carpeta' : 'Archivo'}${item.size ? ` - ${item.size}` : ''}</p>
                 </div>
                 <div class="text-xs text-gray-400 group-hover:text-blue-600">
-                    ${item.mtime ? String(new Date(item.mtime * 1000).toLocaleDateString()) : ''} <!-- Usar item.mtime -->
+                    ${item.mtime ? String(new Date(item.mtime * 1000).toLocaleDateString()) : ''}
                 </div>
             `;
 
@@ -226,29 +235,22 @@ function renderFiles(files, currentPath) {
 export function clearFileView() {
     console.log('[FileDisplay] clearFileView llamado');
     const fileView = UIElements.fileDisplayArea();
-    const currentPathElement = UIElements.currentFolderDisplay();
     const gridViewContainer = document.getElementById('grid-view-container');
     const listViewContainer = document.getElementById('list-view-container');
 
     if (fileView) {
-        // Limpiar ambos contenedores de vista
         if (gridViewContainer) gridViewContainer.innerHTML = '';
         if (listViewContainer) listViewContainer.innerHTML = '';
 
-        // Mostrar mensaje de "seleccione carpeta" en el contenedor activo
         const emptyMessage = '<p class="p-4 text-gray-500">Seleccione una carpeta para ver los archivos.</p>';
         if (currentViewMode === 'grid' && gridViewContainer) {
             gridViewContainer.innerHTML = emptyMessage;
         } else if (currentViewMode === 'list' && listViewContainer) {
             listViewContainer.innerHTML = emptyMessage;
-        } else if (gridViewContainer) { // Default a grid si no hay modo activo
+        } else if (gridViewContainer) {
             gridViewContainer.innerHTML = emptyMessage;
         }
     }
-    if (currentPathElement) {
-        currentPathElement.textContent = '/';
-        currentPathElement.dataset.path = '.'; // Resetear la ruta a la raíz
-        config.currentPath = '.'; // Resetear la ruta en config
-    }
+    config.currentPath = '.';
 }
 

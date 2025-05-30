@@ -1,4 +1,4 @@
-import { loadFiles } from './loadFile.js';
+import { loadFiles } from './fileDisplay.js';
 import { LOADING_SPINNER_HTML } from './uiElements.js';
 import { currentSortOrder, icons } from './config.js'; // Necesario para los parámetros de loadFiles si se usan e iconos
 
@@ -59,7 +59,7 @@ export function loadFolders() {
                     const iconHtml = folder.icon ? folder.icon : icons.folderClosed;
 
                     // Siempre crear el placeholder con ID
-                    let chevronPlaceholderHTML = `<div class="w-4 h-5 flex items-center justify-center mr-1" id="${folderId}-chevron-placeholder"></div>`;
+                    let chevronPlaceholderHTML = `<div class="chevron w-4 h-5 flex items-center justify-center mr-1" id="${folderId}-chevron-placeholder"></div>`;
 
                     folderElement.innerHTML = `
                         <div class="flex items-center p-2 mb-2 hover:bg-blue-100 cursor-pointer text-sm font-bold transition-colors" id="folder-${folderId}">

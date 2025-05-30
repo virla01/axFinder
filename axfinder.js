@@ -1,8 +1,10 @@
 // axfinder.js - Punto de entrada principal para AxFinder
 
 import { loadFolders } from './src/js/loadFolder.js';
-import { loadFiles, setViewMode } from './src/js/loadFile.js';
+import { loadFiles, setViewMode } from './src/js/fileDisplay.js';
 import { icons, currentSortOrder } from './src/js/config.js';
+import { UIElements } from './src/js/uiElements.js';
+import { initializeConfigMenu } from './src/js/configMenu.js';
 
 /**
  * Carga el template HTML principal de AxFinder y lo inyecta en el contenedor especificado.
@@ -23,28 +25,45 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
         }
         containerElement.innerHTML = htmlTemplate;
 
-        // Cargar las carpetas iniciales
-        await loadFolders();
-        await loadFiles('.', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio raíz al inicio
-        console.log('AxFinder inicializado, template cargado y carpetas solicitadas.');
+        // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template
+        setTimeout(async () => {
+            try {
+                await loadFolders();
+                // Intentar obtener los elementos DE NUEVO aquí, DESPUÉS de que el template se haya inyectado
+                // y DESPUÉS de que loadFolders (que también podría modificar el DOM) haya terminado.
 
-        // Inicializar la vista por defecto y añadir event listeners a los botones de vista
-        setViewMode('grid');
-        const gridBtn = document.getElementById('grid-btn');
-        const listBtn = document.getElementById('list-btn');
+                const gridBtn = document.getElementById('grid-btn');
+                const listBtn = document.getElementById('list-btn');
 
-        if (gridBtn) {
-            gridBtn.addEventListener('click', () => setViewMode('grid'));
-        }
+                if (!gridBtn || !listBtn) {
+                    console.error("Botones de vista (grid-btn o list-btn) no encontrados DESPUÉS de cargar el template.");
+                    // Podrías incluso intentar buscarlos de nuevo con UIElements si sospechas de UIElements
+                    // console.log("Intentando con UIElements.gridButton():", UIElements.gridButton());
+                    // console.log("Intentando con UIElements.listButton():", UIElements.listButton());
+                } else {
+                    console.log("Botones de vista encontrados. Añadiendo listeners.");
+                }
 
-        if (listBtn) {
-            listBtn.addEventListener('click', () => setViewMode('list'));
-        }
 
-        // No es necesario llamar a loadFolders aquí de nuevo, ya se hizo arriba.
-        // import('./src/js/fileDisplay.js').then(module => module.initFileDisplay());
-        // import('./src/js/uiElements.js').then(module => module.initUIElements());
-        // import('./src/js/apiService.js').then(module => module.initApiService());
+                if (gridBtn) {
+                    gridBtn.addEventListener('click', () => setViewMode('grid'));
+                }
+
+                if (listBtn) {
+                    listBtn.addEventListener('click', () => setViewMode('list'));
+                }
+
+                // Cargar archivos iniciales y establecer vista
+                await loadFiles('.', currentSortOrder.column, currentSortOrder.direction);
+                console.log('AxFinder inicializado, template cargado y carpetas solicitadas.');
+                setViewMode('grid'); // Establecer vista DESPUÉS de que los botones tengan listeners y los archivos iniciales se carguen
+
+                initializeConfigMenu();
+
+            } catch (error) {
+                console.error('Error dentro del setTimeout de initializeAxFinder:', error);
+            }
+        }, 0);
 
     } catch (error) {
         console.error('Error durante la inicialización de AxFinder:', error);
