@@ -2,9 +2,10 @@
 
 import { loadFolders } from './src/js/loadFolder.js';
 import { loadFiles, setViewMode } from './src/js/fileDisplay.js';
-import { icons, currentSortOrder } from './src/js/config.js';
+import { config, icons, currentSortOrder } from './src/js/config.js';
 import { UIElements } from './src/js/uiElements.js';
-import { initializeConfigMenu } from './src/js/configMenu.js';
+import { initializeConfigMenu, LS_VIEW_MODE, getViewModeSetting, initializeTheme } from './src/js/configMenu.js';
+import { api } from './src/js/apiService.js'; // Importar el servicio de API
 
 /**
  * Carga el template HTML principal de AxFinder y lo inyecta en el contenedor especificado.
@@ -25,39 +26,60 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
         }
         containerElement.innerHTML = htmlTemplate;
 
-        // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template
+        // INICIALIZAR TEMA AQUÍ, después de inyectar el HTML y antes del setTimeout
+        initializeTheme();
+        console.log('[AxFinder] Tema inicializado después de cargar el template.');
+
+        // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template o scripts dependientes del DOM específico del template
         setTimeout(async () => {
             try {
+                // initializeTheme(); // MOVIDO ARRIBA
+
                 await loadFolders();
-                // Intentar obtener los elementos DE NUEVO aquí, DESPUÉS de que el template se haya inyectado
-                // y DESPUÉS de que loadFolders (que también podría modificar el DOM) haya terminado.
+
+                // 1. OBTENER LA CONFIGURACIÓN DEL SERVIDOR (VISTA POR DEFECTO DE PHP) - OPCIONAL
+                // Lo mantenemos por si en el futuro es útil, pero getViewModeSetting ya no lo usa como fallback directo.
+                let phpDefaultViewMode = 'grid'; // Fallback si la API falla o no se usa
+                try {
+                    const serverConfigData = await api.fetchServerConfig();
+                    if (serverConfigData.success && serverConfigData.config && serverConfigData.config.defaultViewMode) {
+                        phpDefaultViewMode = serverConfigData.config.defaultViewMode;
+                        console.log('[AxFinder] Vista por defecto de PHP recuperada (informativo):', phpDefaultViewMode);
+                    } else {
+                        console.warn('[AxFinder] No se pudo obtener la vista por defecto del servidor (informativo).', serverConfigData);
+                    }
+                } catch (error) {
+                    console.error('[AxFinder] Error al obtener la configuración del servidor (informativo):', error);
+                }
+
+                // 2. OBTENER LA VISTA PREFERIDA (LocalStorage o 'grid' por defecto)
+                // getViewModeSetting ahora devuelve 'grid' si no hay nada en localStorage.
+                const preferredViewMode = getViewModeSetting();
+                console.log("[AxFinder] Vista preferida (localStorage o 'grid' default):", preferredViewMode);
+
+                // 3. ESTABLECER config.currentViewMode
+                config.currentViewMode = preferredViewMode;
+                console.log('[AxFinder] config.currentViewMode establecido a:', config.currentViewMode);
+
+                // 4. LLAMAR A setViewMode ANTES DE loadFiles PARA ASEGURAR QUE LOS CONTENEDORES ESTÉN CORRECTOS
+                setViewMode(config.currentViewMode); // Esto actualiza clases CSS y botones
 
                 const gridBtn = document.getElementById('grid-btn');
                 const listBtn = document.getElementById('list-btn');
 
                 if (!gridBtn || !listBtn) {
                     console.error("Botones de vista (grid-btn o list-btn) no encontrados DESPUÉS de cargar el template.");
-                    // Podrías incluso intentar buscarlos de nuevo con UIElements si sospechas de UIElements
-                    // console.log("Intentando con UIElements.gridButton():", UIElements.gridButton());
-                    // console.log("Intentando con UIElements.listButton():", UIElements.listButton());
                 } else {
                     console.log("Botones de vista encontrados. Añadiendo listeners.");
-                }
-
-
-                if (gridBtn) {
                     gridBtn.addEventListener('click', () => setViewMode('grid'));
-                }
-
-                if (listBtn) {
                     listBtn.addEventListener('click', () => setViewMode('list'));
                 }
 
-                // Cargar archivos iniciales y establecer vista
+                // 5. CARGAR ARCHIVOS (renderFiles usará el config.currentViewMode ya establecido)
                 await loadFiles('.', currentSortOrder.column, currentSortOrder.direction);
-                console.log('AxFinder inicializado, template cargado y carpetas solicitadas.');
-                setViewMode('grid'); // Establecer vista DESPUÉS de que los botones tengan listeners y los archivos iniciales se carguen
+                console.log('AxFinder inicializado, template cargado, carpetas y archivos solicitados.');
 
+                // 6. INICIALIZAR MENÚ DE CONFIGURACIÓN
                 initializeConfigMenu();
 
             } catch (error) {

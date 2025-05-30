@@ -44,5 +44,12 @@ export const api = {
 		return request('list_files', { folder: path, sort_by: sortBy, sort_order: sortOrder });
 	},
 	createFolder: (path, folderName) => request('create_folder', { path, folder_name: folderName }),
+
+	/**
+	 * Obtiene la configuración del servidor, como la vista por defecto.
+	 * @returns {Promise<Object>} Una promesa que resuelve con los datos de configuración del servidor.
+	 */
+	fetchServerConfig: () => request('get_config'),
+
 	// ... otros endpoints como delete, rename, upload, etc.
 };

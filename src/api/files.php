@@ -68,205 +68,260 @@ $action = $_GET['action'] ?? 'test';
 
 try {
     if ($action === 'test') {
-    ResponseHandler::json([
-        'success' => true,
-        'message' => 'El endpoint de prueba de files.php funciona correctamente.',
-        'baseDir_configurado' => $baseDir,
-        'app_env' => APP_ENV
-    ]);
-} elseif ($action === 'list_folders') {
-    $currentPath = $_GET['path'] ?? ''; // Obtener la ruta de la subcarpeta, si se proporciona
+        ResponseHandler::json([
+            'success' => true,
+            'message' => 'El endpoint de prueba de files.php funciona correctamente.',
+            'baseDir_configurado' => $baseDir,
+            'app_env' => APP_ENV
+        ]);
+    } elseif ($action === 'get_config') {
+        global $axFinderConfig; // Asegurar que $axFinderConfig es accesible
+        if (isset($axFinderConfig['general']['defaultViewMode'])) {
+            ResponseHandler::json(['success' => true, 'config' => ['defaultViewMode' => $axFinderConfig['general']['defaultViewMode']]]);
+        } else {
+            error_log("[get_config] Error: defaultViewMode no encontrado en la configuración general.");
+            ResponseHandler::error('Configuración de vista por defecto no encontrada en el servidor.', 500);
+        }
+    } elseif ($action === 'list_folders') {
+        $currentPath = $_GET['path'] ?? ''; // Obtener la ruta de la subcarpeta, si se proporciona
 
-    // Validar $currentPath para evitar Path Traversal
-    // Validar $currentPath para evitar Path Traversal. Se buscan '..' o cualquier barra (forward o backward)
-    // y luego se verifica que la ruta resuelta sea válida y comience con $baseDir.
-    if (strpos($currentPath, '..') !== false ||
-        (preg_match('/(?:\\\\|\/)/', $currentPath) &&
-        (realpath($baseDir . DIRECTORY_SEPARATOR . $currentPath) === false || strpos(realpath($baseDir . DIRECTORY_SEPARATOR . $currentPath), realpath($baseDir)) !== 0)
-        )
-    ) {
-        error_log("[list_folders] Intento de Path Traversal detectado o ruta inválida: $currentPath");
-        // Si contiene '..' o si es una ruta que no resuelve dentro de $baseDir
-        ResponseHandler::error('Ruta de carpeta inválida.', 400);
-        exit;
-    }
-
-    $directoryToScan = $baseDir;
-    if (!empty($currentPath)) {
-        $directoryToScan = $baseDir . DIRECTORY_SEPARATOR . $currentPath;
-    }
-    error_log("[list_folders] Intentando escanear: $directoryToScan"); // Log para la ruta a escanear
-
-    if (!is_dir($directoryToScan)) {
-        error_log("[list_folders] Error: '$directoryToScan' no es un directorio.");
-        ResponseHandler::error('El directorio base para listar carpetas no es válido o no existe: ' . $currentPath, 500);
-        exit;
-    }
-    if (!is_readable($directoryToScan)) {
-        error_log("[list_folders] Error: '$directoryToScan' no es legible.");
-        ResponseHandler::error('El directorio especificado no es legible: ' . $currentPath, 500);
-        exit;
-    }
-
-    $folders = [];
-    error_log("[list_folders] Preparando para escanear: $directoryToScan");
-
-    try {
-        $items = scandir($directoryToScan);
-        if ($items === false) {
-            error_log("[list_folders] scandir() falló para el directorio: $directoryToScan");
-            ResponseHandler::error('No se pudo leer el contenido del directorio (scandir falló): ' . $currentPath, 500);
+        // Validar $currentPath para evitar Path Traversal
+        // Validar $currentPath para evitar Path Traversal. Se buscan '..' o cualquier barra (forward o backward)
+        // y luego se verifica que la ruta resuelta sea válida y comience con $baseDir.
+        if (strpos($currentPath, '..') !== false ||
+            (preg_match('/(?:\\\\|\/)/', $currentPath) &&
+            (realpath($baseDir . DIRECTORY_SEPARATOR . $currentPath) === false || strpos(realpath($baseDir . DIRECTORY_SEPARATOR . $currentPath), realpath($baseDir)) !== 0)
+            )
+        ) {
+            error_log("[list_folders] Intento de Path Traversal detectado o ruta inválida: $currentPath");
+            // Si contiene '..' o si es una ruta que no resuelve dentro de $baseDir
+            ResponseHandler::error('Ruta de carpeta inválida.', 400);
             exit;
         }
-        error_log("[list_folders] scandir() completado. Items encontrados: " . count($items));
 
-        global $axFinderConfig;
-        if (!isset($axFinderConfig, $axFinderConfig['icons']) || !is_array($axFinderConfig['icons'])) {
-            error_log("[list_folders] Error crítico: Configuración de iconos no válida o no encontrada.");
-            ResponseHandler::error('Error de configuración interna del servidor (iconos).', 500);
+        $directoryToScan = $baseDir;
+        if (!empty($currentPath)) {
+            $directoryToScan = $baseDir . DIRECTORY_SEPARATOR . $currentPath;
+        }
+        error_log("[list_folders] Intentando escanear: $directoryToScan"); // Log para la ruta a escanear
+
+        if (!is_dir($directoryToScan)) {
+            error_log("[list_folders] Error: '$directoryToScan' no es un directorio.");
+            ResponseHandler::error('El directorio base para listar carpetas no es válido o no existe: ' . $currentPath, 500);
             exit;
         }
-        // Log para verificar las claves de iconos disponibles
-        // error_log("[list_folders] Claves de iconos disponibles: " . implode(', ', array_keys($axFinderConfig['icons'])));
+        if (!is_readable($directoryToScan)) {
+            error_log("[list_folders] Error: '$directoryToScan' no es legible.");
+            ResponseHandler::error('El directorio especificado no es legible: ' . $currentPath, 500);
+            exit;
+        }
 
-        foreach ($items as $item) {
+        $folders = [];
+        error_log("[list_folders] Preparando para escanear: $directoryToScan");
+
+        try {
+            $items = scandir($directoryToScan);
+            if ($items === false) {
+                error_log("[list_folders] scandir() falló para el directorio: $directoryToScan");
+                ResponseHandler::error('No se pudo leer el contenido del directorio (scandir falló): ' . $currentPath, 500);
+                exit;
+            }
+            error_log("[list_folders] scandir() completado. Items encontrados: " . count($items));
+
+            global $axFinderConfig;
+            if (!isset($axFinderConfig, $axFinderConfig['icons']) || !is_array($axFinderConfig['icons'])) {
+                error_log("[list_folders] Error crítico: Configuración de iconos no válida o no encontrada.");
+                ResponseHandler::error('Error de configuración interna del servidor (iconos).', 500);
+                exit;
+            }
+            // Log para verificar las claves de iconos disponibles
+            // error_log("[list_folders] Claves de iconos disponibles: " . implode(', ', array_keys($axFinderConfig['icons'])));
+
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                // Log para cada item procesado
+                // error_log("[list_folders] Procesando item: " . print_r($item, true));
+
+                $itemFullPath = $directoryToScan . DIRECTORY_SEPARATOR . $item;
+                if (is_dir($itemFullPath)) {
+                    $iconSvg = $axFinderConfig['icons']['folderClosed'] ?? '<svg>fallback</svg>';
+                    $hasSubfolders = false;
+                    // Check if the folder has any subdirectories
+                    $subItems = scandir($itemFullPath);
+                    if ($subItems !== false) {
+                        foreach ($subItems as $subItem) {
+                            if ($subItem === '.' || $subItem === '..') {
+                                continue;
+                            }
+                            if (is_dir($itemFullPath . DIRECTORY_SEPARATOR . $subItem)) {
+                                $hasSubfolders = true;
+                                break;
+                            }
+                        }
+                    }
+                    $folders[] = [
+                        'name' => $item,
+                        'type' => 'folder',
+                        'path' => !empty($currentPath) ? $currentPath . '/' . $item : $item,
+                        'icon' => $iconSvg,
+                        'hasSubfolders' => $hasSubfolders
+                    ];
+                }
+            }
+            // Si no se encontraron carpetas, se devuelve un array vacío igualmente.
+            // El frontend deberá manejar el caso de un array de carpetas vacío.
+            ResponseHandler::json(['success' => true, 'folders' => $folders]);
+
+        } catch (Throwable $e) { // Capturar Throwable para errores y excepciones
+            error_log("[list_folders] Excepción capturada en el bloque de escaneo: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
+            error_log("[list_folders] Stack trace: " . $e->getTraceAsString());
+            ResponseHandler::error('Error interno del servidor al procesar la lista de carpetas: ' . $e->getMessage(), 500);
+            exit;
+        }
+
+    } elseif ($action === 'list_files') {
+        $folderName = $_GET['folder'] ?? null;
+        $sortBy = $_GET['sort_by'] ?? 'name'; // Obtener parámetro sort_by, default 'name'
+        $sortOrder = strtolower($_GET['sort_order'] ?? 'asc'); // Obtener parámetro sort_order, default 'asc'
+
+        // Validar sortOrder para que sea solo 'asc' o 'desc'
+        if ($sortOrder !== 'asc' && $sortOrder !== 'desc') {
+            $sortOrder = 'asc';
+        }
+        
+        // Log para depurar los parámetros de ordenación recibidos
+        error_log("[list_files] Parámetros de ordenación recibidos - sortBy: {$sortBy}, sortOrder: {$sortOrder}");
+
+        if (!$folderName) {
+            ResponseHandler::error('Nombre de carpeta no proporcionado.', 400);
+            exit;
+        }
+
+        $targetDir = $baseDir; // Por defecto, escanear el baseDir
+
+        // Si el folderName no es 'storage' (que ya es el baseDir), entonces construir la ruta completa.
+        if ($folderName !== 'storage') {
+            $targetDir = $baseDir . DIRECTORY_SEPARATOR . $folderName;
+        }
+
+        if (strpos($folderName, '..') !== false ||
+            realpath($targetDir) === false ||
+            strpos(realpath($targetDir), realpath($baseDir)) !== 0
+           ) {
+            error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
+            ResponseHandler::error('Nombre de carpeta inválido.', 400);
+            exit;
+        }
+
+        if (!is_dir($targetDir) || !is_readable($targetDir)) {
+            ResponseHandler::error("La carpeta '{$folderName}' no es accesible o no existe.", 404);
+            exit;
+        }
+
+        $items = [];
+        $scannedItems = scandir($targetDir);
+
+        if ($scannedItems === false) {
+            ResponseHandler::error("No se pudo escanear la carpeta '{$folderName}'.", 500);
+            exit;
+        }
+
+        function formatFileSize(int $bytes): string {
+            $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            $i = 0;
+            while ($bytes >= 1024 && $i < count($units) - 1) {
+                $bytes /= 1024;
+                $i++;
+            }
+            return round($bytes, 2) . ' ' . $units[$i];
+        }
+
+        // Array para mapear frontend sortBy a claves reales de $fileData (y tipo de dato para comparación)
+        $sortKeyMap = [
+            'name' => ['key' => 'name', 'type' => 'string'],
+            'size' => ['key' => 'size_bytes', 'type' => 'numeric'], // Necesitaremos 'size_bytes'
+            'mtime' => ['key' => 'mtime', 'type' => 'numeric'],
+            'type' => ['key' => 'name', 'type' => 'string'] // Ordenar por extensión (parte del nombre) o añadir una clave 'extension'? Por ahora nombre.
+                                                            // Si se quiere ordenar realmente por TIPO (ej. .png antes de .jpg), se necesitará extraer la extensión.
+        ];
+
+        // Validar sortBy contra las claves permitidas
+        if (!array_key_exists($sortBy, $sortKeyMap)) {
+            $sortBy = 'name'; // Default a 'name' si no es válido
+        }
+
+        $actualSortKey = $sortKeyMap[$sortBy]['key'];
+        $sortType = $sortKeyMap[$sortBy]['type'];
+
+        foreach ($scannedItems as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            // Log para cada item procesado
-            // error_log("[list_folders] Procesando item: " . print_r($item, true));
+            $itemPath = $targetDir . DIRECTORY_SEPARATOR . $item;
+            if (is_file($itemPath)) {
+                $iconSvg = $axFinderConfig['icons']['defaultFile'] ?? '';
+                $timestamp = filemtime($itemPath);
+                $fileSizeBytes = filesize($itemPath); // Obtener tamaño en bytes para ordenar
 
-            $itemFullPath = $directoryToScan . DIRECTORY_SEPARATOR . $item;
-            if (is_dir($itemFullPath)) {
-                $iconSvg = $axFinderConfig['icons']['folderClosed'] ?? '<svg>fallback</svg>';
-                $hasSubfolders = false;
-                // Check if the folder has any subdirectories
-                $subItems = scandir($itemFullPath);
-                if ($subItems !== false) {
-                    foreach ($subItems as $subItem) {
-                        if ($subItem === '.' || $subItem === '..') {
-                            continue;
-                        }
-                        if (is_dir($itemFullPath . DIRECTORY_SEPARATOR . $subItem)) {
-                            $hasSubfolders = true;
-                            break;
-                        }
+                $fileData = [
+                    'name' => $item,
+                    'type' => 'file',
+                    'size' => formatFileSize($fileSizeBytes),
+                    'size_bytes' => $fileSizeBytes, // Añadir para la ordenación numérica
+                    'icon' => $iconSvg,
+                    'mtime' => $timestamp,
+                ];
+
+                $extension = strtolower(pathinfo($item, PATHINFO_EXTENSION));
+                $imageBasePath = $axFinderConfig['general']['imageBasePath'] ?? './storage/';
+                if (substr($imageBasePath, -1) !== '/') {
+                    $imageBasePath .= '/';
+                }
+
+                $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+                if (in_array($extension, $imageExtensions)) {
+                    if ($folderName === 'storage') {
+                        $fileData['imageUrl'] = $imageBasePath . rawurlencode($item);
+                    } else {
+                        $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
                     }
                 }
-                $folders[] = [
-                    'name' => $item,
-                    'type' => 'folder',
-                    'path' => !empty($currentPath) ? $currentPath . '/' . $item : $item,
-                    'icon' => $iconSvg,
-                    'hasSubfolders' => $hasSubfolders
-                ];
+                $items[] = $fileData;
             }
         }
-        // Si no se encontraron carpetas, se devuelve un array vacío igualmente.
-        // El frontend deberá manejar el caso de un array de carpetas vacío.
-        ResponseHandler::json(['success' => true, 'folders' => $folders]);
 
-    } catch (Throwable $e) { // Capturar Throwable para errores y excepciones
-        error_log("[list_folders] Excepción capturada en el bloque de escaneo: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
-        error_log("[list_folders] Stack trace: " . $e->getTraceAsString());
-        ResponseHandler::error('Error interno del servidor al procesar la lista de carpetas: ' . $e->getMessage(), 500);
-        exit;
-    }
+        // Lógica de ordenación
+        if (!empty($items)) {
+            usort($items, function($a, $b) use ($actualSortKey, $sortOrder, $sortType) {
+                $valA = $a[$actualSortKey];
+                $valB = $b[$actualSortKey];
 
-} elseif ($action === 'list_files') {
-    $folderName = $_GET['folder'] ?? null;
-
-    if (!$folderName) {
-        ResponseHandler::error('Nombre de carpeta no proporcionado.', 400);
-        exit;
-    }
-
-    $targetDir = $baseDir; // Por defecto, escanear el baseDir
-
-    // Si el folderName no es 'storage' (que ya es el baseDir), entonces construir la ruta completa.
-    // Esto permite que 'storage' se refiera a la raíz definida en $baseDir.
-    if ($folderName !== 'storage') {
-        $targetDir = $baseDir . DIRECTORY_SEPARATOR . $folderName;
-    }
-
-    // Validar que $targetDir no contenga caracteres peligrosos (ej. '..', '/', '\') para evitar Path Traversal
-    // y asegurar que la ruta resuelta esté dentro de $baseDir.
-    if (strpos($folderName, '..') !== false || // Prevenir secuencias '..' explícitas en el nombre original
-        realpath($targetDir) === false || // La ruta debe ser válida
-        strpos(realpath($targetDir), realpath($baseDir)) !== 0 // La ruta debe estar dentro de $baseDir
-       ) {
-        error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
-        ResponseHandler::error('Nombre de carpeta inválido.', 400);
-        exit;
-    }
-
-    if (!is_dir($targetDir) || !is_readable($targetDir)) {
-        ResponseHandler::error("La carpeta '{$folderName}' no es accesible o no existe.", 404);
-        exit;
-    }
-
-    $items = [];
-    $scannedItems = scandir($targetDir);
-
-    if ($scannedItems === false) {
-        ResponseHandler::error("No se pudo escanear la carpeta '{$folderName}'.", 500);
-        exit;
-    }
-
-    // Función para formatear el tamaño del archivo
-    function formatFileSize(int $bytes): string {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $i = 0;
-        while ($bytes >= 1024 && $i < count($units) - 1) {
-            $bytes /= 1024;
-            $i++;
-        }
-        return round($bytes, 2) . ' ' . $units[$i];
-    }
-
-    foreach ($scannedItems as $item) {
-        if ($item === '.' || $item === '..') {
-            continue;
-        }
-        $itemPath = $targetDir . DIRECTORY_SEPARATOR . $item;
-        // Solo procesar si es un archivo
-        if (is_file($itemPath)) {
-            $iconSvg = $axFinderConfig['icons']['defaultFile'] ?? ''; // Icono por defecto para archivos
-
-            $fileData = [
-                'name' => $item,
-                'type' => 'file', // Solo se procesan archivos
-                'size' => formatFileSize(filesize($itemPath)),
-                'icon' => $iconSvg,
-            ];
-
-            $extension = strtolower(pathinfo($item, PATHINFO_EXTENSION));
-            $imageBasePath = $axFinderConfig['general']['imageBasePath'] ?? './storage/';
-            if (substr($imageBasePath, -1) !== '/') {
-                $imageBasePath .= '/';
-            }
-
-            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-            if (in_array($extension, $imageExtensions)) {
-                // Si el folderName es 'storage', no lo duplicamos en la URL
-                if ($folderName === 'storage') {
-                    $fileData['imageUrl'] = $imageBasePath . rawurlencode($item);
-                } else {
-                    $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
+                if ($sortType === 'numeric') {
+                    $comparison = $valA <=> $valB;
+                } else { // string, o default a string
+                    // Para ordenar por extensión si sortBy es 'type', necesitamos comparar extensiones
+                    if ($actualSortKey === 'name' && isset($_GET['sort_by']) && $_GET['sort_by'] === 'type') { 
+                        $extA = strtolower(pathinfo($a['name'], PATHINFO_EXTENSION));
+                        $extB = strtolower(pathinfo($b['name'], PATHINFO_EXTENSION));
+                        // Si las extensiones son iguales, ordena por nombre completo
+                        if ($extA === $extB) {
+                            $comparison = strnatcasecmp($a['name'], $b['name']);
+                        } else {
+                            $comparison = strnatcasecmp($extA, $extB);
+                        }
+                    } else {
+                         $comparison = strnatcasecmp((string)$valA, (string)$valB); // Comparación natural insensible a mayúsculas/minúsculas
+                    }
                 }
-            }
-            $items[] = $fileData;
+                return ($sortOrder === 'asc') ? $comparison : -$comparison;
+            });
         }
-    }
-    ResponseHandler::json(['success' => true, 'items' => $items, 'folder' => $folderName]);
+        error_log("[list_files] Items después de ordenar: " . print_r(array_column($items, 'name'), true));
 
-} elseif ($action === 'get_config') {
-    // Asegurarse de que $axFinderConfig está disponible
-    if (isset($axFinderConfig)) {
-        ResponseHandler::json(['success' => true, 'config' => $axFinderConfig]);
-    } else {
-        ResponseHandler::error('La configuración de AxFinder no está disponible.', 500);
-    }
+        ResponseHandler::json(['success' => true, 'items' => $items, 'folder' => $folderName]);
+
     } else {
         ResponseHandler::error('Acción no válida.', 400);
     }

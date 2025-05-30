@@ -1,16 +1,21 @@
 @import "tailwindcss";
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+html,
+body {
+	@apply h-full m-0 p-0 overflow-hidden;
+}
+
 .ax-finder {
 	@apply relative flex flex-col w-full h-full overflow-hidden border border-gray-300 rounded-lg;
 }
 
 .sidebar-content {
-	@apply flex flex-col w-64 bg-white border-r border-blue-200;
+	@apply flex flex-col h-full w-64 bg-white border-r border-blue-200 overflow-hidden flex-shrink-0;
 }
 
 .sidebar-item-logo {
-	@apply flex items-center justify-center p-4 border-b border-blue-200;
+	@apply flex items-center justify-center p-4 border-b border-blue-200 flex-shrink-0;
 }
 
 .logo {
@@ -18,23 +23,23 @@
 }
 
 .sidebar-item-inicio {
-	@apply flex-1 py-2 pl-2;
+	@apply flex-1 py-2 flex-grow pl-2 overflow-hidden;
 }
 
 #sidebar-folders-container {
-	@apply overflow-y-auto;
+	@apply flex-grow overflow-y-auto;
 }
 
 .main-content {
-	@apply flex flex-col flex-1;
+	@apply flex flex-col flex-1 flex-grow overflow-hidden;
 }
 
 .main-content-toolbar {
-	@apply flex items-center justify-between p-4 bg-white border-b border-blue-200;
+	@apply flex items-center justify-between p-4 bg-white text-gray-900 dark:text-blue-50 dark:bg-blue-950 border-b border-blue-200;
 }
 
 .main-content-area {
-	@apply flex-1 p-4 overflow-y-auto bg-blue-50;
+	@apply flex-1 flex-grow p-4 overflow-y-auto bg-blue-50;
 }
 
 .toolbar-left-group {
@@ -59,10 +64,8 @@
 }
 
 /* Config Menu */
-
-/* @apply relative h-full z-1000 shadow-md bg-white min-w-[220px] max-w-[320px] w-[260px] border-l border-gray-200; */
 .ax-sidebar {
-	@apply absolute right-0 overflow-hidden border-l-2 border-gray-200 bg-gray-50 z-100;
+	@apply absolute hidden right-0 overflow-hidden border-l-2 border-gray-200 bg-gray-50 z-100;
 	transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
 	transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
 	transition-duration: var(--tw-duration, var(--default-transition-duration));
@@ -70,6 +73,10 @@
 	transition-duration: 300ms;
 	--tw-ease: var(--ease-in-out);
 	transition-timing-function: var(--ease-in-out);
+}
+
+.ax-sidebar.open {
+	@apply block;
 }
 
 .ax-panel-header {
@@ -91,9 +98,6 @@
 .config-item {
 	@apply mb-2;
 }
-
-
-
 
 /* varios */
 .ax-primary,
@@ -130,6 +134,10 @@ svg {
 	@apply bg-blue-800/5;
 }
 
+.btn.active {
+	@apply bg-blue-100;
+}
+
 ::-webkit-scrollbar {
 	width: calc(var(--spacing) * 2);
 }
@@ -150,9 +158,41 @@ svg {
 
 .config-checkbox {
 	@apply w-4 h-4 mr-2 outline-0 z-1;
-
 }
 
 .config-label {
 	@apply flex items-center;
+}
+
+.ax-info-hidden {
+	display: none !important;
+}
+
+/* Estilos para el modal de imagen */
+#ax-image-modal-overlay {
+	/* Estilos Tailwind ya aplicados en JS: fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center */
+	/* Puedes añadir o sobreescribir aquí si es necesario */
+}
+
+#ax-image-modal-overlay>div {
+	/* modalContent */
+	/* Estilos Tailwind ya aplicados en JS: relative bg-white p-4 rounded-lg shadow-xl max-w-3xl max-h-[80vh] z-50 flex flex-col */
+	/* Asegúrate de que los estilos de Tailwind para flex-col funcionan bien con la altura de la imagen */
+}
+
+#ax-image-modal-overlay img {
+	/* Estilos Tailwind ya aplicados en JS: max-w-full max-h-[calc(80vh-100px)] object-contain rounded */
+	/* El -100px es un ajuste aproximado para el padding del modal, el nombre del archivo y el botón de cierre */
+	/* Podrías necesitar ajustarlo */
+	display: block;
+	/* Ayuda a evitar espacio extra debajo de la imagen */
+	margin: auto;
+	/* Centrar si la imagen es más pequeña que el contenedor */
+}
+
+#ax-image-modal-overlay button {
+	/* Estilos Tailwind ya aplicados en JS: absolute top-2 right-2 text-2xl text-gray-600 hover:text-gray-900 focus:outline-none */
+	line-height: 1;
+	/* Para alinear mejor el &times; */
+	padding: 0.25rem 0.5rem;
 }
