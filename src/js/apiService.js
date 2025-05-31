@@ -51,5 +51,61 @@ export const api = {
 	 */
 	fetchServerConfig: () => request('get_config'),
 
-	// ... otros endpoints como delete, rename, upload, etc.
+	/**
+	 * Sube un archivo con sus metadatos.
+	 * @param {FormData} formData - El objeto FormData que contiene el archivo y los metadatos.
+	 * @returns {Promise<object>} - Una promesa que resuelve a la respuesta JSON del servidor.
+	 */
+	async uploadFile(formData) { // Asumo que esta función ya la tienes o la crearás para la subida del modal
+		try {
+			const response = await fetch(`${API_BASE_URL}?action=upload`, { // Endpoint de ejemplo
+				method: 'POST',
+				body: formData, // FormData se envía directamente, el navegador pone el Content-Type
+			});
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({ message: response.statusText }));
+				return { success: false, message: `Error del servidor: ${errorData.message || response.status}` };
+			}
+			return await response.json();
+		} catch (error) {
+			console.error('[ApiService] Excepción al subir archivo:', error);
+			return { success: false, message: error.message || 'Error de conexión o red.' };
+		}
+	},
+
+	/**
+	 * Actualiza los metadatos de un archivo de imagen.
+	 * @param {object} data - Un objeto que contiene la ruta del archivo y los nuevos metadatos.
+	 * @param {string} data.path - La ruta del archivo de imagen (ej: "Fotos/imagen.jpg").
+	 * @param {object} data.metadata - El objeto con los metadatos actualizados.
+	 * @returns {Promise<object>} - Una promesa que resuelve a la respuesta JSON del servidor.
+	 */
+	async updateImageMetadata(data) {
+		const { path, metadata } = data;
+		try {
+			const response = await fetch(`${API_BASE_URL}?action=updateMetadata`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ path, metadata }), // path es la ruta completa del archivo, no solo la carpeta
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({ message: response.statusText }));
+				console.error('[ApiService] Error HTTP al actualizar metadatos:', response.status, errorData);
+				return { success: false, message: `Error del servidor: ${errorData.message || response.status}` };
+			}
+
+			const result = await response.json();
+			console.log('[ApiService] Respuesta de updateImageMetadata:', result);
+			return result;
+
+		} catch (error) {
+			console.error('[ApiService] Excepción al actualizar metadatos:', error);
+			return { success: false, message: error.message || 'Error de conexión o red.' };
+		}
+	}
+
+	// ... otros endpoints como delete, rename, etc.
 };

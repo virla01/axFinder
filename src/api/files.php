@@ -50,6 +50,244 @@ set_exception_handler(function($exception) {
     exit;
 });
 
+// INICIO DE FUNCIONES A AÑADIR/ASEGURAR QUE EXISTEN AQUÍ
+
+/**
+ * Valida y construye una ruta segura dentro del directorio base de almacenamiento.
+ *
+ * @param string $baseDir El directorio base absoluto y resuelto.
+ * @param string $relativePath La ruta relativa proporcionada por el cliente.
+ * @param bool $checkExists Opcional. Si es true, verifica que la ruta final exista.
+ * @param bool $isFile Opcional. Si es true y $checkExists es true, verifica que sea un archivo. Si es false y $checkExists es true, verifica que sea un directorio.
+ * @return string|false La ruta absoluta segura y resuelta, o false si la validación falla.
+ */
+function getSafePath(string $baseDir, string $relativePath, bool $checkExists = false, bool $isFile = false): string|false {
+    // Normalizar slashes y limpiar la ruta relativa
+    $normalizedPath = str_replace('\\', '/', $relativePath);
+    $normalizedPath = trim($normalizedPath, '/'); // Quitar slashes al inicio y final
+
+    // Evitar que la ruta salga del directorio base (path traversal)
+    if (strpos($normalizedPath, '..') !== false) {
+        error_log("[getSafePath] Intento de Path Traversal detectado (uso de '..'): $relativePath");
+        return false;
+    }
+
+    // Construir la ruta completa
+    $fullPath = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $normalizedPath;
+    if ($normalizedPath === '' || $normalizedPath === '.') { // Si relativePath es vacía o '.', la ruta es solo baseDir
+        $fullPath = $baseDir;
+    }
+
+    // Resolver la ruta a su forma canónica (absoluta)
+    $realFullPath = realpath($fullPath);
+
+    if ($realFullPath === false) {
+        if ($checkExists) {
+            error_log("[getSafePath] La ruta no existe y se esperaba que existiera: $fullPath");
+            return false;
+        }
+        $parentDir = dirname($fullPath);
+        if (realpath($parentDir) === false || strpos(realpath($parentDir), $baseDir) !== 0) {
+            error_log("[getSafePath] El directorio padre para la nueva ruta no es válido o está fuera del base: $parentDir (base: $baseDir)");
+            return false;
+        }
+        if (strpos($fullPath, $baseDir) !== 0 && $fullPath !== $baseDir) { // Añadida comprobación $fullPath !== $baseDir
+            error_log("[getSafePath] La ruta intencionada (sin resolver) está fuera del directorio base: $fullPath (base: $baseDir)");
+            return false;
+        }
+        $finalPath = $fullPath; 
+    } else {
+        if (strpos($realFullPath, $baseDir) !== 0) {
+            error_log("[getSafePath] Path Traversal detectado. Ruta resuelta ($realFullPath) fuera de la base ($baseDir). Original: $relativePath");
+            return false;
+        }
+        $finalPath = $realFullPath;
+    }
+    
+    if ($checkExists) {
+        if ($isFile) {
+            if (!is_file($finalPath)) {
+                error_log("[getSafePath] Se esperaba un archivo, pero no se encontró o es un directorio: $finalPath");
+                return false;
+            }
+        } else { 
+            if (!is_dir($finalPath)) {
+                error_log("[getSafePath] Se esperaba un directorio, pero no se encontró o es un archivo: $finalPath");
+                return false;
+            }
+        }
+    }
+    return $finalPath;
+}
+
+/**
+ * Maneja la subida de archivos y la creación de metadatos.
+ */
+function handleUpload(string $baseDir): void {
+    error_log("[handleUpload] Iniciando subida...");
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        ResponseHandler::error('Método no permitido.', 405);
+        return;
+    }
+
+    $currentPath = $_POST['currentPath'] ?? '';
+    error_log("[handleUpload] currentPath recibido: " . print_r($currentPath, true));
+
+    $uploadDirRelative = $currentPath;
+    if (empty($uploadDirRelative) || $uploadDirRelative === '.') {
+        $uploadDirRelative = ''; 
+    }
+    
+    // true para checkExists, false para isFile (esperamos un directorio)
+    $destinationDirectory = getSafePath($baseDir, $uploadDirRelative, true, false); 
+
+    if ($destinationDirectory === false) {
+        // Log adicional para entender por qué getSafePath falló
+        error_log("[handleUpload] getSafePath falló para baseDir: '$baseDir', uploadDirRelative: '$uploadDirRelative'");
+        ResponseHandler::error("Ruta de destino inválida o no accesible para la subida: '$uploadDirRelative'", 400);
+        return;
+    }
+    error_log("[handleUpload] Directorio de destino validado: $destinationDirectory");
+
+    // Crear/verificar el subdirectorio .meta
+    $metaDir = rtrim($destinationDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
+    if (!is_dir($metaDir)) {
+        if (!mkdir($metaDir, 0755, true)) { // 0755 permisos, true para creación recursiva
+            error_log("[handleUpload] Error al crear el directorio de metadatos: $metaDir");
+            ResponseHandler::error('Error interno del servidor al preparar el almacenamiento de metadatos.', 500);
+            return;
+        }
+        error_log("[handleUpload] Directorio de metadatos creado: $metaDir");
+    }
+
+    if (!isset($_FILES['uploaded_image'])) {
+        ResponseHandler::error('No se recibió ningún archivo (campo "uploaded_image" esperado).', 400);
+        return;
+    }
+
+    $file = $_FILES['uploaded_image'];
+
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $uploadErrors = [
+            UPLOAD_ERR_INI_SIZE   => "El archivo excede la directiva upload_max_filesize en php.ini.",
+            UPLOAD_ERR_FORM_SIZE  => "El archivo excede la directiva MAX_FILE_SIZE especificada en el formulario HTML.",
+            UPLOAD_ERR_PARTIAL    => "El archivo se subió solo parcialmente.",
+            UPLOAD_ERR_NO_FILE    => "No se subió ningún archivo.",
+            UPLOAD_ERR_NO_TMP_DIR => "Falta la carpeta temporal del servidor.",
+            UPLOAD_ERR_CANT_WRITE => "No se pudo escribir el archivo en el disco del servidor.",
+            UPLOAD_ERR_EXTENSION  => "Una extensión de PHP detuvo la subida del archivo.",
+        ];
+        $errorMessage = $uploadErrors[$file['error']] ?? "Error desconocido al subir el archivo.";
+        ResponseHandler::error($errorMessage, 500);
+        return;
+    }
+
+    $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo->file($file['tmp_name']);
+    if (!in_array($mimeType, $allowedMimeTypes)) {
+        ResponseHandler::error("Tipo de archivo no permitido: $mimeType. Solo se permiten imágenes (JPEG, PNG, GIF, WEBP, BMP).", 415);
+        return;
+    }
+
+    $fileName = basename($file['name']);
+    $fileName = preg_replace("/[^a-zA-Z0-9._-]/", "_", $fileName); // Sanitizar nombre
+    if (empty($fileName)) { // Si el nombre del archivo queda vacío después de sanitizar
+        $fileName = "uploaded_image_" . time(); // Nombre genérico
+    }
+
+    $destinationFile = rtrim($destinationDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $fileName;
+    // Ajustar la ruta del archivo de metadatos
+    $metadataFile = rtrim($metaDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $fileName . '.meta.json';
+    
+    // Verificar si el archivo ya existe (opcional, decide cómo manejarlo)
+    // if (file_exists($destinationFile)) {
+    //     ResponseHandler::error("El archivo '$fileName' ya existe en el destino.", 409); // 409 Conflict
+    //     return;
+    // }
+
+    error_log("[handleUpload] Intentando mover de {$file['tmp_name']} a $destinationFile");
+    if (move_uploaded_file($file['tmp_name'], $destinationFile)) {
+        $metadata = [];
+        $metadataFields = ['caption', 'author', 'publishDate', 'source', 'tags', 'keywords'];
+        foreach ($metadataFields as $field) {
+            if (isset($_POST[$field])) {
+                $metadata[$field] = $_POST[$field];
+            }
+        }
+        if (file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            error_log("[handleUpload] Archivo y metadatos guardados exitosamente: $destinationFile");
+            ResponseHandler::json(['success' => true, 'message' => 'Archivo y metadatos subidos con éxito.', 'filePath' => ($uploadDirRelative ? $uploadDirRelative . '/' : '') . $fileName]);
+        } else {
+            error_log("[handleUpload] Archivo subido pero error al guardar metadatos para: $metadataFile");
+            // unlink($destinationFile); // Considera eliminar el archivo si los metadatos fallan
+            ResponseHandler::error('Archivo subido, pero error al guardar los metadatos.', 500);
+        }
+    } else {
+        error_log("[handleUpload] Error al mover el archivo subido a $destinationFile. Verificar permisos en destino y carpeta temporal PHP. Origen: {$file['tmp_name']}. Código de error del archivo: {$file['error']}");
+        ResponseHandler::error('Error al guardar el archivo subido en el servidor.', 500);
+    }
+}
+
+/**
+ * Maneja la actualización de metadatos de una imagen existente.
+ */
+function handleUpdateMetadata(string $baseDir): void {
+    error_log("[handleUpdateMetadata] Iniciando actualización de metadatos...");
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        ResponseHandler::error('Método no permitido.', 405);
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHandler::error('Error en el JSON de entrada para actualizar metadatos: ' . json_last_error_msg(), 400);
+        return;
+    }
+
+    $relativePath = $input['path'] ?? null;
+    $metadata = $input['metadata'] ?? null;
+
+    if (empty($relativePath) || !is_array($metadata)) {
+        ResponseHandler::error('Faltan datos para actualizar metadatos: se requiere "path" (string) y "metadata" (object).', 400);
+        return;
+    }
+    
+    // true para checkExists, true para isFile (esperamos un archivo de imagen)
+    $imageFilePath = getSafePath($baseDir, $relativePath, true, true); 
+
+    if ($imageFilePath === false) {
+        error_log("[handleUpdateMetadata] getSafePath falló para baseDir: '$baseDir', relativePath: '$relativePath'");
+        ResponseHandler::error("Archivo no encontrado o ruta inválida para actualizar metadatos: '$relativePath'", 404);
+        return;
+    }
+    error_log("[handleUpdateMetadata] Ruta de imagen validada: $imageFilePath");
+
+    // Determinar la ruta del archivo de metadatos en el subdirectorio .meta
+    $imageDir = dirname($imageFilePath);
+    $imageFileName = basename($imageFilePath);
+    $metaDir = rtrim($imageDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
+    
+     if (!is_dir($metaDir)) {
+        error_log("[handleUpdateMetadata] Advertencia: El directorio de metadatos $metaDir no existe para la imagen $imageFilePath. Se intentará crear.");
+        if (!mkdir($metaDir, 0755, true)) {
+            error_log("[handleUpdateMetadata] Error al crear el directorio de metadatos que faltaba: $metaDir");
+        }
+    }
+
+    $metadataFilePath = rtrim($metaDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $imageFileName . '.meta.json';
+
+    if (file_put_contents($metadataFilePath, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+        error_log("[handleUpdateMetadata] Metadatos actualizados exitosamente para: $metadataFilePath");
+        ResponseHandler::json(['success' => true, 'message' => 'Metadatos actualizados con éxito.']);
+    } else {
+        error_log("[handleUpdateMetadata] Error al guardar metadatos actualizados en: $metadataFilePath");
+        ResponseHandler::error('Error al guardar los metadatos actualizados en el servidor.', 500);
+    }
+}
+
+// FIN DE FUNCIONES A AÑADIR/ASEGURAR QUE EXISTEN AQUÍ
+
 // Depuración inicial para verificar $baseDir
 if (isset($baseDir)) {
     error_log("files.php (Prueba Inicial) - \$baseDir desde config.php: " . print_r($baseDir, true));
@@ -282,11 +520,34 @@ try {
 
                 $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
                 if (in_array($extension, $imageExtensions)) {
-                    if ($folderName === 'storage') {
-                        $fileData['imageUrl'] = $imageBasePath . rawurlencode($item);
-                    } else {
-                        $fileData['imageUrl'] = $imageBasePath . $folderName . '/' . rawurlencode($item);
+                    $fileData['type'] = 'image'; // Marcar explícitamente como tipo imagen para el frontend
+                    $imageRelativePath = $folderName ? $folderName . '/' . rawurlencode($item) : rawurlencode($item);
+                    if ($folderName === 'storage') { // Si folderName es literalmente 'storage', significa que estamos en la raíz de baseDir
+                        $imageRelativePath = rawurlencode($item);
                     }
+                    $fileData['imageUrl'] = $imageBasePath . $imageRelativePath;
+
+                    // --- NUEVA LÓGICA PARA CARGAR METADATOS ---
+                    $metaDir = rtrim($targetDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
+                    $metadataFilePath = rtrim($metaDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $item . '.meta.json';
+                    
+                    error_log("[list_files] Buscando metadatos para $item en: $metadataFilePath");
+
+                    if (is_file($metadataFilePath) && is_readable($metadataFilePath)) {
+                        $metadataJson = file_get_contents($metadataFilePath);
+                        $metadata = json_decode($metadataJson, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $fileData['metadata'] = $metadata;
+                            error_log("[list_files] Metadatos cargados para $item: " . print_r($metadata, true));
+                        } else {
+                            error_log("[list_files] Error al decodificar JSON de metadatos para $item de $metadataFilePath: " . json_last_error_msg());
+                            $fileData['metadata'] = null; 
+                        }
+                    } else {
+                        error_log("[list_files] Archivo de metadatos no encontrado o no legible para $item en $metadataFilePath");
+                        $fileData['metadata'] = null; 
+                    }
+                    // --- FIN DE NUEVA LÓGICA ---
                 }
                 $items[] = $fileData;
             }
@@ -322,14 +583,38 @@ try {
 
         ResponseHandler::json(['success' => true, 'items' => $items, 'folder' => $folderName]);
 
+    } elseif ($action === 'upload') {
+        // Asegúrate que $baseDir esté definida globalmente antes de este punto.
+        // Por ejemplo: $baseDir = 'E:\\WEBS\\axFinder\\storage'; O que venga de config.php
+        if (!isset($baseDir) || !is_string($baseDir) || empty($baseDir)) {
+            error_log("[files.php] Error crítico: \$baseDir no está definido o es inválido antes de llamar a handleUpload.");
+            ResponseHandler::error("Error crítico de configuración del servidor (directorio base).", 500);
+            exit;
+        }
+        handleUpload($baseDir);
+    } elseif ($action === 'updateMetadata') {
+        // Asegúrate que $baseDir esté definida globalmente.
+        if (!isset($baseDir) || !is_string($baseDir) || empty($baseDir)) {
+            error_log("[files.php] Error crítico: \$baseDir no está definido o es inválido antes de llamar a handleUpdateMetadata.");
+            ResponseHandler::error("Error crítico de configuración del servidor (directorio base).", 500);
+            exit;
+        }
+        handleUpdateMetadata($baseDir);
     } else {
-        ResponseHandler::error('Acción no válida.', 400);
+        if (empty($action)) {
+            error_log("[files.php] Error: La acción está vacía o no fue proporcionada en la URL.");
+            ResponseHandler::error('Acción no especificada.', 400);
+        } else {
+            error_log("[files.php] Error: Acción no válida recibida: " . print_r($action, true));
+            ResponseHandler::error('Acción no válida.', 400);
+        }
     }
 } catch (Throwable $e) {
     // Captura cualquier error o excepción no manejada previamente
     error_log("Error general en files.php: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
+    error_log("Stack trace: " . $e->getTraceAsString()); // Añadir stack trace para más detalle
     if (!headers_sent()) { // Solo enviar si no se ha enviado nada antes
-        ResponseHandler::error('Ocurrió un error inesperado en el servidor.', 500);
+        ResponseHandler::error('Ocurrió un error inesperado en el servidor. Revise los logs.', 500);
     }
     exit;
 }

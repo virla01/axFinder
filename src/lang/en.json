@@ -31,7 +31,6 @@
 	"drop_files_here": "Drop files here to upload",
 	"select_files": "Select files",
 	"file_selected": "File selected",
-
 	"modal.metadataTitle": "File Metadata",
 	"modal.imagePreviewAlt": "Image Preview",
 	"modal.dragDropText": "Drag & drop an image here or click to select",
@@ -53,5 +52,10 @@
 	"modal.uploadErrorLog": "Error uploading file with metadata:",
 	"modal.uploadErrorAlert": "Failed to upload file. Error: {error}",
 	"modal.fileSelectedForUpload": "File selected: {fileName}",
-	"modal.metadataFor": "Metadata for:"
+	"modal.metadataFor": "Metadata for:",
+	"modal.uploadButton": "Upload Image",
+	"modal.uploadingButton": "Uploading...",
+	"modal.uploadSuccessMessage": "Metadata and image uploaded successfully.",
+	"modal.uploadErrorMessage": "Error uploading file. Please try again.",
+	"modal.imagePreview": "Image Preview:"
 }

@@ -476,9 +476,8 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
     if (existingModalOverlay) {
         existingModalOverlay.remove();
     }
-    // Limpiar listeners de teclado anteriores si existían
     document.removeEventListener('keydown', handleModalKeyNavigation);
-    document.removeEventListener('keydown', handleEscKey); // Asegurarse que el listener global de Esc se limpia
+    document.removeEventListener('keydown', handleEscKey);
 
     currentModalImages = allImages;
     currentModalIndex = index;
@@ -486,117 +485,89 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
     // Crear overlay
     const overlay = document.createElement('div');
     overlay.id = 'ax-image-modal-overlay';
-    overlay.className = 'fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center';
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center p-4'; // p-4 para espacio alrededor del modal
     overlay.addEventListener('click', () => closeModal());
 
-    // Crear contenedor del modal
+    // Crear contenedor del modal (el recuadro blanco general)
+    // Debe ser relative para el posicionamiento absoluto del botón X.
     const modalContent = document.createElement('div');
-    modalContent.className = 'relative bg-white p-4 rounded-lg shadow-xl max-w-3xl max-h-[80vh] z-50 flex flex-col';
-    // Detener la propagación para que el clic en el contenido no cierre el modal
+    modalContent.className = 'relative bg-white p-4 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] z-50 flex flex-col';
     modalContent.addEventListener('click', (e) => e.stopPropagation());
 
+    // Contenedor para el nombre del archivo y el botón de cierre (HIJO DE modalContent)
+    const headerControlsContainer = document.createElement('div');
+    headerControlsContainer.className = 'flex justify-between items-center w-full mb-3 px-1'; // px-1 para un pequeño margen lateral interno
 
-    // Nombre del archivo
+    // Nombre del archivo (dentro de headerControlsContainer, alineado a la izquierda por flex)
     const nameElement = document.createElement('div');
     nameElement.textContent = imageName;
-    nameElement.className = 'text-lg font-semibold mb-2 text-gray-800';
+    nameElement.className = 'text-lg font-semibold text-gray-800 truncate'; // Quitado text-center, truncate para nombres largos
+    headerControlsContainer.appendChild(nameElement);
 
-    // Imagen
+    // Botón de cierre (dentro de headerControlsContainer, alineado a la derecha por flex)
+    const closeButtonElement = document.createElement('button');
+    closeButtonElement.textContent = 'X';
+    closeButtonElement.className = 'text-black hover:text-gray-700 text-xl ml-auto font-semibold'; // Clases simplificadas
+    closeButtonElement.style.backgroundColor = 'transparent';
+    closeButtonElement.style.border = 'none';
+    closeButtonElement.style.padding = '0.1rem 0.3rem'; // Padding aún más sutil para que no sea muy grande
+    closeButtonElement.title = 'Cerrar';
+    closeButtonElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeModal();
+    });
+    headerControlsContainer.appendChild(closeButtonElement);
+
+    modalContent.appendChild(headerControlsContainer); // Añadir el contenedor de controles del encabezado
+
+    // Contenedor específico para la imagen (HIJO DE modalContent, después de headerControlsContainer)
+    const imageWrapper = document.createElement('div');
+    imageWrapper.className = 'w-full h-full flex-grow flex flex-col items-center justify-center overflow-hidden'; // Eliminado pt-3
+
+    // Imagen (dentro de imageWrapper)
     const img = document.createElement('img');
     img.src = imageUrl;
     img.alt = imageName;
-    img.className = 'max-w-full max-h-[calc(80vh-100px)] object-contain rounded'; // Ajuste de altura
+    // Ajustar max-h para que quepa bien con el nombre y el padding
+    img.className = 'max-w-full max-h-[calc(90vh-150px)] object-contain rounded';
+    imageWrapper.appendChild(img);
 
-    // Botón de cierre
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = '&times;';
-    closeButton.className = 'absolute top-2 right-2 text-2xl text-gray-600 hover:text-gray-900 focus:outline-none';
-    closeButton.title = 'Cerrar';
-    closeButton.addEventListener('click', () => closeModal());
+    modalContent.appendChild(imageWrapper); // imageWrapper (con nombre e imagen) se añade a modalContent
 
-    // Ensamblar modal
-    modalContent.appendChild(nameElement);
-    modalContent.appendChild(img);
-    modalContent.appendChild(closeButton);
+    // Añadir modalContent al overlay
+    overlay.appendChild(modalContent);
 
-    // Contenedor para los metadatos
-    const metadataContainer = document.createElement('div');
-    metadataContainer.className = 'mt-4 p-3 bg-gray-50 rounded max-h-48 overflow-y-auto text-sm'; // Estilos para el contenedor de metadatos
-    modalContent.appendChild(metadataContainer);
-
-    // Intentar obtener el item actual y sus metadatos
-    const currentImageItem = (allImages && index !== -1 && allImages[index]) ? allImages[index] : null;
-    const metadata = currentImageItem ? currentImageItem.metadata : null;
-
-    if (metadata) {
-        const fields = [
-            { key: 'caption', label: 'Descripción' },
-            { key: 'author', label: 'Autor' },
-            { key: 'publish-date', label: 'Fecha de Publicación' },
-            { key: 'source', label: 'Fuente' },
-            { key: 'tags', label: 'Etiquetas' },
-            { key: 'keywords', label: 'Palabras Clave' }
-        ];
-
-        fields.forEach(field => {
-            const value = metadata[field.key] || ''; // Usar string vacío si el valor no existe
-            const fieldDiv = document.createElement('div');
-            fieldDiv.className = 'mb-2';
-
-            const labelElement = document.createElement('label');
-            labelElement.className = 'block font-semibold text-gray-700';
-            labelElement.textContent = field.label + ':';
-            fieldDiv.appendChild(labelElement);
-
-            const inputElement = document.createElement('input');
-            inputElement.type = 'text';
-            inputElement.value = value;
-            inputElement.readOnly = true; // Solo lectura por ahora
-            inputElement.className = 'w-full p-1 border border-gray-300 rounded mt-1 bg-gray-100'; // Estilo de input deshabilitado
-            // Si el campo es 'caption' o 'tags', podríamos considerar usar un textarea en el futuro
-            // if (field.key === 'caption' || field.key === 'tags') {
-            // inputElement = document.createElement('textarea');
-            // inputElement.rows = 2;
-            // }
-            fieldDiv.appendChild(inputElement);
-            metadataContainer.appendChild(fieldDiv);
-        });
-    } else {
-        metadataContainer.innerHTML = '<p class="text-gray-500">No hay metadatos disponibles para esta imagen.</p>';
-    }
-
-
-    // Botones de navegación
+    // Botones de navegación (AHORA HIJOS DE OVERLAY, fuera de modalContent)
     if (currentModalImages.length > 1) {
         const prevButton = document.createElement('button');
         prevButton.id = 'ax-modal-prev-btn';
         prevButton.innerHTML = '&#10094;'; // <
-        prevButton.className = 'absolute left-4 top-1/2 -translate-y-1/2 text-3xl text-white hover:text-gray-300 focus:outline-none bg-black bg-opacity-30 hover:bg-opacity-50 rounded-full p-2 transition-colors';
+        // Estilo para estar en el overlay, a la izquierda del modalContent
+        prevButton.className = 'absolute left-5 top-1/2 -translate-y-1/2 text-4xl text-white opacity-60 hover:opacity-90 focus:outline-none z-50 p-3 rounded-full bg-black bg-opacity-20 hover:bg-opacity-40 transition-all';
         prevButton.title = 'Anterior';
         prevButton.addEventListener('click', (e) => {
             e.stopPropagation();
             navigateToImage(-1);
         });
-        modalContent.appendChild(prevButton); // Añadir al modalContent para que no se cierre al hacer clic
+        overlay.appendChild(prevButton); // Añadido a OVERLAY
 
         const nextButton = document.createElement('button');
         nextButton.id = 'ax-modal-next-btn';
         nextButton.innerHTML = '&#10095;'; // >
-        nextButton.className = 'absolute right-4 top-1/2 -translate-y-1/2 text-3xl text-white hover:text-gray-300 focus:outline-none bg-black bg-opacity-30 hover:bg-opacity-50 rounded-full p-2 transition-colors';
+        // Estilo para estar en el overlay, a la derecha del modalContent
+        nextButton.className = 'absolute right-5 top-1/2 -translate-y-1/2 text-4xl text-white opacity-60 hover:opacity-90 focus:outline-none z-50 p-3 rounded-full bg-black bg-opacity-20 hover:bg-opacity-40 transition-all';
         nextButton.title = 'Siguiente';
         nextButton.addEventListener('click', (e) => {
             e.stopPropagation();
             navigateToImage(1);
         });
-        modalContent.appendChild(nextButton); // Añadir al modalContent
+        overlay.appendChild(nextButton); // Añadido a OVERLAY
 
         updateNavigationButtons();
     }
 
-    overlay.appendChild(modalContent);
     document.body.appendChild(overlay);
 
-    // Listener para tecla Escape y flechas de navegación
     document.addEventListener('keydown', handleEscKey);
     if (currentModalImages.length > 1) {
         document.addEventListener('keydown', handleModalKeyNavigation);

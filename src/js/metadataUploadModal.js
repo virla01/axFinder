@@ -1,6 +1,9 @@
 // src/js/metadataUploadModal.js
 
 import { t } from './i18n.js'; // Importar la función t real
+import { api } from './apiService.js'; // Para la subida
+import { loadFiles } from './fileDisplay.js'; // Para refrescar la vista
+import { config } from './config.js'; // Para obtener config.currentPath
 
 let metadataModal = null;
 let modalImagePreview = null;
@@ -228,47 +231,42 @@ async function handleFormSubmit(event) {
         alert(t('modal.noFileSelectedError')); // Traducir: "Por favor, selecciona una imagen para subir."
         return;
     }
-    // formData ya contiene los campos del formulario (caption, author, etc.)
-    // El input de archivo no se añade automáticamente a FormData si está oculto y
-    // no tiene nombre, o si se pobló mediante drag & drop sin pasarlo explícitamente.
-    // Aunque modalFileInput.files = files; en handleDrop y 'change' debería cubrirlo.
-    // Para estar seguros, podemos añadirlo explícitamente si es necesario,
-    // pero usualmente FormData(formElement) recoge los inputs con 'name'.
-
-    // Asegurarse de que el archivo está en el FormData
-    // Si modalFileInput tiene un 'name' (ej. name="imageFile"), FormData lo recogerá.
-    // Si no, hay que añadirlo: formData.append('imageFile', file, file.name);
-    // Revisando tu HTML, el <input type="file" id="modal-file-input"> no tiene atributo "name".
-    // Vamos a añadirlo al FormData explícitamente.
+    // El input de archivo no tiene atributo "name", lo añadimos explícitamente.
     formData.append('uploaded_image', file, file.name);
 
+    // Añadir la ruta actual al FormData para que el backend sepa dónde guardar el archivo
+    formData.append('currentPath', config.currentPath || '.');
 
     console.log('[MetadataUploadModal] Enviando formulario...');
-    // Aquí iría la lógica para enviar formData al servidor (tu script PHP de subida)
-    // Ejemplo:
+    if (saveAndUploadButton) {
+        saveAndUploadButton.disabled = true;
+        saveAndUploadButton.textContent = t('modal.uploadingButton') || 'Subiendo...';
+    }
+
     try {
-        // Suponiendo que tienes una función api.uploadFileWithMetadata en apiService.js
-        // const response = await api.uploadFileWithMetadata(formData);
+        // Asumimos que apiService.js tendrá una función como:
+        // api.uploadFile = async (formData) => { ... }
+        const response = await api.uploadFile(formData); // Ajusta el nombre si es diferente en tu apiService
 
-        // --- Placeholder para la llamada a la API ---
-        console.log('FormData a enviar:');
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value);
+        if (response && response.success) {
+            console.log(t('modal.uploadSuccessLog'), response); // Mantener el log
+            // alert(t('modal.uploadSuccessAlert', { fileName: file.name })); // Comentado o eliminado
+            closeMetadataModal();
+            if (config.currentPath) {
+                loadFiles(config.currentPath); // Refrescar la vista de archivos
+            }
+        } else {
+            console.error(t('modal.uploadErrorLog'), response);
+            alert(t('modal.uploadErrorMessage') + (response && response.message ? ` (${response.message})` : ''));
         }
-        alert('Simulación: Archivo y metadatos enviados. Reemplazar con llamada real a la API.');
-        // --- Fin Placeholder ---
-
-        // if (response.success) {
-        //     alert(t('modal.uploadSuccess')); // Traducir: "¡Archivo subido con éxito!"
-        //     closeMetadataModal();
-        //     // Aquí deberías refrescar la vista de archivos para mostrar el nuevo archivo
-        //     // Por ejemplo, llamando a loadFiles(config.currentPath) o una función similar
-        // } else {
-        //     alert(t('modal.uploadError') + ': ' + (response.message || 'Error desconocido'));
-        // }
     } catch (error) {
-        console.error('[MetadataUploadModal] Error al subir archivo:', error);
-        alert(t('modal.uploadError') + ': ' + error.message);
+        console.error('[MetadataUploadModal] Excepción durante la subida:', error);
+        alert(t('modal.uploadExceptionMessage', { message: error.message }) || `Excepción al subir: ${error.message}`);
+    } finally {
+        if (saveAndUploadButton) {
+            saveAndUploadButton.disabled = false;
+            saveAndUploadButton.textContent = t('modal.saveAndUploadButton');
+        }
     }
 }
 
