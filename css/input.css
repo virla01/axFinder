@@ -3,19 +3,25 @@
 
 html,
 body {
-	@apply h-full m-0 p-0 overflow-hidden;
+	@apply h-full p-0 m-0 mt-8 dark:bg-slate-900;
 }
 
+/* Content gral. */
 .ax-finder {
-	@apply relative flex flex-col w-full h-full overflow-hidden border border-gray-300 rounded-lg;
+	@apply relative flex flex-col w-full max-h-[37.5rem] overflow-hidden border border-blue-200 dark:border-slate-700 rounded-lg;
 }
 
+.ax-finder>div {
+	/* @apply overflow-hidden; */
+}
+
+/* Sidebar */
 .sidebar-content {
-	@apply flex flex-col h-full w-64 bg-white border-r border-blue-200 overflow-hidden flex-shrink-0;
+	@apply flex flex-col flex-shrink-0 w-64 h-full overflow-hidden bg-white border-r border-blue-200 dark:border-slate-700 dark:bg-slate-900;
 }
 
 .sidebar-item-logo {
-	@apply flex items-center justify-center p-4 border-b border-blue-200 flex-shrink-0;
+	@apply flex items-center justify-center flex-shrink-0 p-4 border-b border-blue-200 dark:border-slate-700;
 }
 
 .logo {
@@ -23,25 +29,27 @@ body {
 }
 
 .sidebar-item-inicio {
-	@apply flex-1 py-2 flex-grow pl-2 overflow-hidden;
+	@apply flex-1 flex-grow py-2 pl-2 overflow-hidden;
 }
 
 #sidebar-folders-container {
 	@apply flex-grow overflow-y-auto;
 }
 
+/* Main */
 .main-content {
 	@apply flex flex-col flex-1 flex-grow overflow-hidden;
 }
 
 .main-content-toolbar {
-	@apply flex items-center justify-between p-4 bg-white text-gray-900 dark:text-blue-50 dark:bg-blue-950 border-b border-blue-200;
+	@apply flex items-center justify-between p-4 bg-white border-b border-blue-200 dark:bg-slate-950 text-slate-900 dark:text-blue-50 dark:bg-blue-950;
 }
 
 .main-content-area {
-	@apply flex-1 flex-grow p-4 overflow-y-auto bg-blue-50;
+	@apply flex-1 flex-grow p-4 overflow-y-auto bg-blue-50 dark:bg-slate-800;
 }
 
+/* toolbar */
 .toolbar-left-group {
 	@apply flex items-center;
 }
@@ -55,17 +63,17 @@ body {
 }
 
 .search-input {
-	@apply py-2 pl-10 pr-4 text-base text-gray-900 placeholder-gray-500 transition-colors bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+	@apply py-2 pl-10 pr-4 text-base transition-colors bg-white border border-blue-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent;
 }
 
-
+/* footer */
 .footer {
-	@apply flex items-center justify-between p-2 border-blue-200 border-t-1;
+	@apply flex items-center justify-between p-2 border-blue-200 border-t-1 dark:border-slate-700;
 }
 
 /* Config Menu */
 .ax-sidebar {
-	@apply absolute hidden right-0 overflow-hidden border-l-2 border-gray-200 bg-gray-50 z-100;
+	@apply absolute right-0 hidden border-l-2 border-slate-200 bg-slate-50 z-100 h-[37.5rem];
 	transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
 	transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
 	transition-duration: var(--tw-duration, var(--default-transition-duration));
@@ -80,80 +88,27 @@ body {
 }
 
 .ax-panel-header {
-	@apply flex items-center justify-between p-5 text-lg font-semibold text-gray-700 bg-gray-200 border-b border-gray-300;
+	@apply flex items-center justify-between p-5 text-lg font-semibold border-b text-slate-700 bg-slate-200 border-slate-300 dark:border-slate-700;
 }
 
 .config-group-title {
-	@apply py-2 mb-4 text-base font-bold text-gray-700 border-b border-gray-200;
+	@apply py-2 mb-4 text-base font-bold border-b text-slate-700 border-slate-200 dark:border-slate-700;
 }
 
 .ax-panel-content {
-	@apply flex-1 p-4 overflow-y-scroll;
+	@apply flex-1 p-4 pr-0 overflow-hidden;
+}
+
+.config-groups {
+	@apply block h-[32.7131rem] overflow-y-scroll;
 }
 
 .config-group {
-	@apply flex flex-col pb-2 border-b border-gray-200;
+	@apply flex flex-col pb-2 border-b border-slate-200 dark:border-slate-700;
 }
 
 .config-item {
 	@apply mb-2;
-}
-
-/* varios */
-.ax-primary,
-.ax-secondary {
-	@apply w-auto h-5 fill-blue-600;
-}
-
-svg {
-	@apply text-blue-500;
-}
-
-.chevron>svg {
-	@apply w-4 h-4;
-}
-
-.inicio-img {
-	@apply w-5 h-5;
-}
-
-.btn {
-	@apply inline-flex items-center justify-center px-4 py-2 transition-colors;
-}
-
-.btn-rounded {
-	@apply rounded-full;
-}
-
-.btn-rounded-full {
-	@apply p-2 rounded-full;
-}
-
-.btn-rounded:hover,
-.btn-rounded-full:hover {
-	@apply bg-blue-800/5;
-}
-
-.btn.active {
-	@apply bg-blue-100;
-}
-
-::-webkit-scrollbar {
-	width: calc(var(--spacing) * 2);
-}
-
-::-webkit-scrollbar-track {
-	border-radius: 0.25rem;
-	background-color: var(--color-gray-100);
-}
-
-::-webkit-scrollbar-thumb {
-	border-radius: 0.25rem;
-	background-color: var(--color-gray-400);
-}
-
-::-webkit-scrollbar-thumb:hover {
-	background-color: var(--color-gray-500);
 }
 
 .config-checkbox {
@@ -169,6 +124,10 @@ svg {
 }
 
 /* Estilos para el modal de imagen */
+.modal-content {
+	@apply bg-white max-w-[37.5rem] mx-auto flex flex-col border border-slate-200 dark:border-slate-700 rounded-lg;
+}
+
 #ax-image-modal-overlay {
 	/* Estilos Tailwind ya aplicados en JS: fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center */
 	/* Puedes añadir o sobreescribir aquí si es necesario */
@@ -191,8 +150,66 @@ svg {
 }
 
 #ax-image-modal-overlay button {
-	/* Estilos Tailwind ya aplicados en JS: absolute top-2 right-2 text-2xl text-gray-600 hover:text-gray-900 focus:outline-none */
+	/* Estilos Tailwind ya aplicados en JS: absolute top-2 right-2 text-2xl text-slate-600 hover:text-slate-900 focus:outline-none */
 	line-height: 1;
 	/* Para alinear mejor el &times; */
 	padding: 0.25rem 0.5rem;
+}
+
+/* varios */
+.ax-primary,
+.ax-secondary {
+	@apply w-auto h-5 fill-blue-600;
+}
+
+svg {
+	@apply text-blue-500;
+}
+
+.chevron>svg,
+svg.close {
+	@apply w-4 h-4;
+}
+
+.inicio-img {
+	@apply w-5 h-5;
+}
+
+.btn {
+	@apply inline-flex items-center justify-center px-2 py-1 mx-2 transition-colors;
+}
+
+.btn-rounded {
+	@apply rounded-full;
+}
+
+.btn-rounded-full {
+	@apply p-2 rounded-full;
+}
+
+.btn-rounded:hover,
+.btn-rounded-full:hover {
+	@apply bg-blue-50 dark:bg-slate-500/60;
+}
+
+.btn.active {
+	@apply bg-blue-50/95 dark:bg-slate-500/40;
+}
+
+::-webkit-scrollbar {
+	width: calc(var(--spacing) * 2);
+}
+
+::-webkit-scrollbar-track {
+	border-radius: 0.25rem;
+	background-color: var(--color-slate-100);
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 0.25rem;
+	background-color: var(--color-slate-400);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--color-slate-500);
 }

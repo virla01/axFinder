@@ -84,7 +84,7 @@ export function setViewMode(mode) {
     if (mode === 'grid') {
         if (gridViewContainer) {
             gridViewContainer.classList.remove('hidden');
-            gridViewContainer.classList.add('grid', 'grid-cols-2', 'gap-4', 'sm:grid-cols-3', 'md:grid-cols-4', 'lg:grid-cols-6', 'p-4');
+            gridViewContainer.classList.add('grid', 'grid-cols-2', 'gap-4', 'sm:grid-cols-3', 'md:grid-cols-4', 'p-4');
             gridViewContainer.classList.remove('space-y-2');
         }
         if (listViewContainer) {
@@ -96,7 +96,7 @@ export function setViewMode(mode) {
         if (listViewContainer) {
             listViewContainer.classList.remove('hidden');
             listViewContainer.classList.add('space-y-2', 'p-4');
-            listViewContainer.classList.remove('grid', 'grid-cols-2', 'gap-4', 'sm:grid-cols-3', 'md:grid-cols-4', 'lg:grid-cols-6');
+            listViewContainer.classList.remove('grid', 'grid-cols-2', 'gap-4', 'sm:grid-cols-3', 'md:grid-cols-4');
         }
         if (gridViewContainer) {
             gridViewContainer.classList.add('hidden');
@@ -231,94 +231,114 @@ function renderFiles(files, currentPath) {
         const itemIconSvg = item.icon || ''; // SVG del icono desde el backend
 
         if (config.currentViewMode === 'grid') {
-            // Crear elemento para la vista Grid
             const gridItem = document.createElement('div');
-            gridItem.className = 'p-4 transition-all bg-white border-2 border-blue-200 rounded-lg cursor-pointer hover:shadow-lg hover:border-blue-300 file-item group';
+            gridItem.className = 'p-4 transition-all bg-white border-2 border-blue-200 rounded-lg cursor-pointer hover:shadow-lg hover:border-blue-300 file-item group'; // Clase base, se sobreescribe para imágenes.
             gridItem.setAttribute('data-file-path', item.path);
             gridItem.setAttribute('data-file-type', item.type);
+            gridItem.setAttribute('data-file-name', item.name);
 
             if (item.type === 'folder') {
                 const folderIconHtml = `<div class="w-16 h-16 text-blue-500 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                const folderDateDisplay = item.mtime ? new Date(item.mtime * 1000).toLocaleDateString() : '';
                 gridItem.innerHTML = `
                     ${folderIconHtml}
-                    <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
+                    <div class="flex flex-col items-center text-center w-full">
+                        <span class="text-sm font-medium text-gray-700 truncate w-full file-name-display ${showName ? '' : 'ax-info-hidden'}">${item.name}</span>
+                        ${folderDateDisplay ? `<span class="text-xs text-gray-500 truncate file-date-display ${showDate ? '' : 'ax-info-hidden'}">${folderDateDisplay}</span>` : ''}
+                    </div>
                 `;
             } else if (item.imageUrl) {
                 console.log(`[DEBUG RenderImgGrid] Item: ${item.name}, mtime: ${item.mtime}, size: ${item.size}`);
-
-                gridItem.className = 'transition-shadow shadow cursor-pointer file-item group hover:shadow-md flex flex-col items-center bg-white rounded-lg overflow-hidden border border-gray-200';
-                // Añadir atributos data-* para el modal de imagen
+                gridItem.className = 'transition-shadow shadow cursor-pointer file-item group hover:shadow-lg flex flex-col items-center bg-white rounded-lg overflow-hidden border border-gray-200';
                 gridItem.setAttribute('data-image-url', item.imageUrl);
-                gridItem.setAttribute('data-file-name', item.name);
 
-                const thumbnailUrl = item.thumbnailUrl || item.imageUrl; // Usar thumbnailUrl si existe, sino imageUrl
+                const fileSizeDisplay = item.size !== undefined && item.size !== null ? item.size : '';
+                const fileDateDisplay = item.mtime ? new Date(item.mtime * 1000).toLocaleDateString() : '';
 
-                const thumbnailDiv = document.createElement('div');
-                thumbnailDiv.className = 'w-full h-32 bg-gray-200 bg-cover bg-center'; // Ajusta h-32 según sea necesario
-                thumbnailDiv.style.backgroundImage = `url('${thumbnailUrl}')`;
-                gridItem.appendChild(thumbnailDiv);
+                gridItem.innerHTML = `
+                    <div class="w-full h-32 bg-gray-200 bg-cover bg-center relative" style="background-image: url('${item.imageUrl}');">
+                        <div class="grid-img-tool w-full flex justify-center bg-white/80 absolute bottom-0 px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <ul class="grid grid-cols-3 gap-1.5 w-22">
+                                <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-blue-800/10 hover:text-blue-600 cursor-pointer action-view" alt="Ver" title="Ver archivo" data-action="view">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-4 h-4"><path fill="currentColor" d="M288 144a110.94 110.94 0 0 0-31.24 5 55.4 55.4 0 0 1 7.24 27 56 56 0 0 1-56 56 55.4 55.4 0 0 1-27-7.24A111.71 111.71 0 1 0 288 144zm284.52 97.4C518.29 135.59 410.93 64 288 64S57.68 135.64 3.48 241.41a32.35 32.35 0 0 0 0 29.19C57.71 376.41 165.07 448 288 448s230.32-71.64 284.52-177.41a32.35 32.35 0 0 0 0-29.19zM288 400c-98.65 0-189.09-55-237.93-144C98.91 167 189.34 112 288 112s189.09 55 237.93 144C477.1 345 386.66 400 288 400z"/></svg>
+                                </li>
+                                <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-green-800/10 hover:text-green-600 cursor-pointer action-edit" alt="Editar" title="Editar archivo" data-action="edit">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-4 h-4"><path fill="currentColor" d="M402.3 344.9l32-32c5-5 13.7-1.5 13.7 5.7V464c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h273.5c7.1 0 10.7 8.6 5.7 13.7l-32 32c-1.5 1.5-3.5 2.3-5.7 2.3H48v352h352V350.5c0-2.1.8-4.1 2.3-5.6zm156.6-201.8L296.3 405.7l-90.4 10c-26.2 2.9-48.5-19.2-45.6-45.6l10-90.4L432.9 17.1c22.9-22.9 59.9-22.9 82.7 0l43.2 43.2c22.9 22.9 22.9 60 .1 82.8zM460.1 174L402 115.9 216.2 301.8l-7.3 65.3 65.3-7.3L460.1 174zm64.8-79.7l-43.2-43.2c-4.1-4.1-10.8-4.1-14.8 0L436 82l58.1 58.1 30.9-30.9c4-4.2 4-10.8-.1-14.9z"/></svg>
+                                </li>
+                                <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-red-800/10 hover:text-red-600 cursor-pointer action-delete" alt="Eliminar" title="Borrar archivo" data-action="delete">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"/></svg>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flex flex-col p-2 text-center w-full">
+                        <span class="w-full text-sm font-medium text-gray-700 truncate file-name-display ${showName ? '' : 'ax-info-hidden'}">${item.name}</span>
+                        ${fileSizeDisplay ? `<span class="text-xs text-gray-500 truncate file-size-display ${showSize ? '' : 'ax-info-hidden'}">${fileSizeDisplay}</span>` : ''}
+                        ${fileDateDisplay ? `<span class="text-xs text-gray-500 truncate file-date-display ${showDate ? '' : 'ax-info-hidden'}">${fileDateDisplay}</span>` : ''}
+                    </div>
+                `;
+            } else { // Archivos genéricos (no carpetas, no imágenes con previsualización)
+                const fileIconHtml = `<div class="w-16 h-16 text-gray-500 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
+                const fileSizeDisplay = item.size !== undefined && item.size !== null ? item.size : '';
+                const fileDateDisplay = item.mtime ? new Date(item.mtime * 1000).toLocaleDateString() : '';
 
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'flex flex-col items-center p-2 text-center w-full'; // Reducido padding y altura
-
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'w-full mt-1 text-sm font-medium text-gray-700 truncate file-name-display';
-                nameSpan.textContent = item.name;
-                infoDiv.appendChild(nameSpan);
-
-                if (item.size) {
-                    const sizeSpan = document.createElement('span');
-                    sizeSpan.className = 'text-xs text-gray-500 file-size-display';
-                    sizeSpan.textContent = item.size;
-                    infoDiv.appendChild(sizeSpan);
-                }
-
-                if (item.mtime) {
-                    const dateSpan = document.createElement('span');
-                    dateSpan.className = 'text-xs text-gray-500 file-date-display';
-                    dateSpan.textContent = new Date(item.mtime * 1000).toLocaleDateString();
-                    infoDiv.appendChild(dateSpan);
-                }
-
-                gridItem.appendChild(infoDiv);
-
-            } else {
-                const fileIconHtml = `<div class="w-16 h-16 text-gray-400 mb-2 flex items-center justify-center">${itemIconSvg}</div>`;
                 gridItem.innerHTML = `
                     ${fileIconHtml}
-                    <span class="text-sm font-medium text-gray-700 truncate w-full">${item.name}</span>
-                    ${item.size ? `<span class="text-xs text-gray-500">${item.size}</span>` : ''}
+                    <div class="flex flex-col items-center text-center w-full">
+                        <span class="text-sm font-medium text-gray-700 truncate w-full file-name-display ${showName ? '' : 'ax-info-hidden'}">${item.name}</span>
+                        ${fileSizeDisplay ? `<span class="text-xs text-gray-500 truncate file-size-display ${showSize ? '' : 'ax-info-hidden'}">${fileSizeDisplay}</span>` : ''}
+                        ${fileDateDisplay ? `<span class="text-xs text-gray-500 truncate file-date-display ${showDate ? '' : 'ax-info-hidden'}">${fileDateDisplay}</span>` : ''}
+                    </div>
                 `;
             }
-
             itemsContainer.appendChild(gridItem);
+            // Las llamadas a applyVisibilityToElement(gridItem, ...) se eliminan ya que los spans controlan su visibilidad.
 
-        } else { // list view
+        } else if (config.currentViewMode === 'list') {
             const listItem = document.createElement('div');
-            listItem.className = 'file-item-list group bg-white p-2.5 rounded-md shadow-sm hover:bg-blue-50 transition-colors cursor-pointer flex items-center space-x-3';
+            listItem.className = 'file-item-list group bg-white rounded-tr-md rounded-br-md shadow-sm hover:shadow-lg hover:bg-blue-50/50 transition-colors flex items-center file-item'; // Añadido file-item para consistencia de selectores de visibilidad
             listItem.setAttribute('data-file-path', item.path);
             listItem.setAttribute('data-file-type', item.type);
+            listItem.setAttribute('data-file-name', item.name);
 
-            let listIconHtml = '';
+            let listIconHtml;
             if (item.type === 'folder') {
-                listIconHtml = `<div class="flex-shrink-0 w-6 h-6 text-blue-500 flex items-center justify-center">${itemIconSvg}</div>`;
+                // Para carpetas, usamos el SVG si está disponible, sino un ícono genérico de carpeta (si lo tuvieras en `icons`)
+                // O mantenemos el itemIconSvg que podría ser específico del backend.
+                listIconHtml = `<div class="flex-shrink-0 w-10 h-10 text-blue-500 flex items-center justify-center p-2">${itemIconSvg || icons.defaultFolderIcon || '📁'}</div>`;
             } else if (item.imageUrl) {
-                listIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="flex-shrink-0 w-8 h-8 object-cover rounded">`;
-                // Añadir atributos data-* para el modal de imagen también en la vista de lista
+                listIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="w-20 h-19 object-cover">`; // Clases de list.html
                 listItem.setAttribute('data-image-url', item.imageUrl);
-                listItem.setAttribute('data-file-name', item.name);
             } else {
-                listIconHtml = `<div class="flex-shrink-0 w-6 h-6 text-gray-400 flex items-center justify-center">${itemIconSvg}</div>`;
+                // Para otros archivos, usamos el SVG si está disponible, sino un ícono genérico de archivo
+                listIconHtml = `<div class="flex-shrink-0 w-10 h-10 text-gray-400 flex items-center justify-center p-2">${itemIconSvg || icons.defaultFileIcon || '📄'}</div>`;
             }
+
+            const fileSizeDisplay = item.size !== undefined && item.size !== null ? item.size : '';
+            const fileDateDisplay = item.mtime ? new Date(item.mtime * 1000).toLocaleDateString() : '';
+            const typeDisplay = item.type === 'folder' ? 'Carpeta' : 'Archivo';
 
             listItem.innerHTML = `
                 ${listIconHtml}
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-800 truncate">${item.name}</p>
-                    <p class="text-xs text-gray-500 truncate">${item.type === 'folder' ? 'Carpeta' : 'Archivo'}${item.size ? ` - ${item.size}` : ''}</p>
+                <div class="flex-1 min-w-0 px-4 py-2">
+                    <p class="text-base font-medium text-gray-800 truncate file-name-display ${showName ? '' : 'ax-info-hidden'}">${item.name}</p>
+                    <p class="text-xs text-gray-500 truncate file-size-display ${showSize ? '' : 'ax-info-hidden'}">
+                        ${typeDisplay}${fileSizeDisplay ? ` - ${fileSizeDisplay}` : ''}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate file-date-display ${showDate ? '' : 'ax-info-hidden'}">${fileDateDisplay}</p>
                 </div>
-                <div class="text-xs text-gray-400 group-hover:text-blue-600">
-                    ${item.mtime ? String(new Date(item.mtime * 1000).toLocaleDateString()) : ''}
+                <div class="list-img-tool px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ul class="grid grid-cols-3 gap-1.5 w-22">
+                        <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-blue-800/10 hover:text-blue-600 cursor-pointer action-view" alt="Ver" title="Ver archivo" data-action="view">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-4 h-4"><path fill="currentColor" d="M288 144a110.94 110.94 0 0 0-31.24 5 55.4 55.4 0 0 1 7.24 27 56 56 0 0 1-56 56 55.4 55.4 0 0 1-27-7.24A111.71 111.71 0 1 0 288 144zm284.52 97.4C518.29 135.59 410.93 64 288 64S57.68 135.64 3.48 241.41a32.35 32.35 0 0 0 0 29.19C57.71 376.41 165.07 448 288 448s230.32-71.64 284.52-177.41a32.35 32.35 0 0 0 0-29.19zM288 400c-98.65 0-189.09-55-237.93-144C98.91 167 189.34 112 288 112s189.09 55 237.93 144C477.1 345 386.66 400 288 400z"/></svg>
+                        </li>
+                        <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-green-800/10 hover:text-green-600 cursor-pointer action-edit" alt="Editar" title="Editar archivo" data-action="edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-4 h-4"><path fill="currentColor" d="M402.3 344.9l32-32c5-5 13.7-1.5 13.7 5.7V464c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h273.5c7.1 0 10.7 8.6 5.7 13.7l-32 32c-1.5 1.5-3.5 2.3-5.7 2.3H48v352h352V350.5c0-2.1.8-4.1 2.3-5.6zm156.6-201.8L296.3 405.7l-90.4 10c-26.2 2.9-48.5-19.2-45.6-45.6l10-90.4L432.9 17.1c22.9-22.9 59.9-22.9 82.7 0l43.2 43.2c22.9 22.9 22.9 60 .1 82.8zM460.1 174L402 115.9 216.2 301.8l-7.3 65.3 65.3-7.3L460.1 174zm64.8-79.7l-43.2-43.2c-4.1-4.1-10.8-4.1-14.8 0L436 82l58.1 58.1 30.9-30.9c4-4.2 4-10.8-.1-14.9z"/></svg>
+                        </li>
+                        <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-red-800/10 hover:text-red-600 cursor-pointer action-delete" alt="Eliminar" title="Borrar archivo" data-action="delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"/></svg>
+                        </li>
+                    </ul>
                 </div>
             `;
 
@@ -363,25 +383,87 @@ function renderFiles(files, currentPath) {
 function addEventListenersToItems(container) {
     if (!container) return;
 
-    const imageItems = container.querySelectorAll('[data-image-url]');
-    imageItems.forEach(item => {
-        item.addEventListener('dblclick', () => {
-            const imageUrl = item.dataset.imageUrl;
-            const imageName = item.dataset.fileName;
+    // Listener para doble clic en imágenes (funcionalidad existente)
+    const imageItemsForDblClick = container.querySelectorAll('[data-image-url][data-file-name]'); // Aseguramos que tenga ambos data attributes
+    imageItemsForDblClick.forEach(item => {
+        // Primero removemos cualquier listener de dblclick existente para evitar duplicados
+        // Esto es una solución simple. Una mejor podría ser pasar una función con nombre para poder removerla específicamente.
+        const new_item = item.cloneNode(true);
+        item.parentNode.replaceChild(new_item, item);
+        // Ahora new_item es el que está en el DOM, y no tiene listeners
+
+        new_item.addEventListener('dblclick', () => {
+            const imageUrl = new_item.dataset.imageUrl;
+            const imageName = new_item.dataset.fileName;
 
             if (imageUrl && imageName) {
-                // Obtener todas las imágenes de la carpeta actual desde el caché
                 const currentFiles = fileCache.get(config.currentPath) || [];
                 const allImagesInFolder = currentFiles.filter(file => file.imageUrl);
-
                 let currentIndex = -1;
                 if (allImagesInFolder.length > 0) {
                     currentIndex = allImagesInFolder.findIndex(img => img.imageUrl === imageUrl);
                 }
-
                 showImageModal(imageUrl, imageName, allImagesInFolder, currentIndex);
             }
         });
+    });
+
+    // Listener para botones de acción dentro de cada item (grid o list)
+    const allFileItems = container.querySelectorAll('.file-item, .file-item-list');
+    allFileItems.forEach(item => {
+        const viewButton = item.querySelector('[data-action="view"]');
+
+        if (viewButton) {
+            // Prevenir duplicados para el botón de ver también
+            const new_viewButton = viewButton.cloneNode(true);
+            viewButton.parentNode.replaceChild(new_viewButton, viewButton);
+
+            new_viewButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Evitar que el clic se propague al file-item padre
+
+                const imageUrl = item.dataset.imageUrl;
+                const imageName = item.dataset.fileName;
+
+                if (imageUrl && imageName) { // Solo actuar si el item es una imagen
+                    console.log(`[FileDisplay] Botón Ver clickeado para: ${imageName}`);
+                    const currentFiles = fileCache.get(config.currentPath) || [];
+                    const allImagesInFolder = currentFiles.filter(file => file.imageUrl);
+                    let currentIndex = -1;
+                    if (allImagesInFolder.length > 0) {
+                        currentIndex = allImagesInFolder.findIndex(img => img.imageUrl === imageUrl);
+                    }
+                    showImageModal(imageUrl, imageName, allImagesInFolder, currentIndex);
+                } else {
+                    console.log('[FileDisplay] Botón Ver clickeado, pero no es una imagen o falta data.', item.dataset);
+                    // Aquí podrías manejar la acción de "ver" para otros tipos de archivo si es necesario
+                    // Por ejemplo, si es un PDF o un texto, podrías abrirlo en una nueva pestaña o un visor diferente.
+                    // if (item.dataset.fileType === 'file' && !imageUrl) { ... }
+                }
+            });
+        }
+
+        // Aquí se podrían añadir listeners para otros data-action como edit o delete
+        const editButton = item.querySelector('[data-action="edit"]');
+        if (editButton) {
+            // Lógica para editar (placeholder)
+            editButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                console.log('[FileDisplay] Botón Editar clickeado para:', item.dataset.filePath);
+                // alert(`Editar: ${item.dataset.filePath}`);
+            });
+        }
+
+        const deleteButton = item.querySelector('[data-action="delete"]');
+        if (deleteButton) {
+            // Lógica para eliminar (placeholder)
+            deleteButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                console.log('[FileDisplay] Botón Eliminar clickeado para:', item.dataset.filePath);
+                // if (confirm(`¿Seguro que quieres eliminar ${item.dataset.fileName}?`)) {
+                //     // Llamar a la API para eliminar y luego recargar la vista
+                // }
+            });
+        }
     });
 }
 

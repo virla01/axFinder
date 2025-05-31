@@ -6,6 +6,8 @@ import { config, icons, currentSortOrder } from './src/js/config.js';
 import { UIElements } from './src/js/uiElements.js';
 import { initializeConfigMenu, LS_VIEW_MODE, getViewModeSetting, initializeTheme } from './src/js/configMenu.js';
 import { api } from './src/js/apiService.js'; // Importar el servicio de API
+import { initializeMetadataUploadModal, openMetadataModal } from './src/js/metadataUploadModal.js';
+import { initI18n } from './src/js/i18n.js'; // Importar initI18n
 
 /**
  * Carga el template HTML principal de AxFinder y lo inyecta en el contenedor especificado.
@@ -14,6 +16,10 @@ import { api } from './src/js/apiService.js'; // Importar el servicio de API
  */
 async function initializeAxFinder(containerElement, templatePath = 'src/template/ax-template.html') {
     try {
+        // INICIALIZAR I18N PRIMERO
+        await initI18n(); // Cargar traducciones (ej. español por defecto)
+        console.log('[AxFinder] Sistema i18n inicializado.');
+
         const response = await fetch(templatePath);
         if (!response.ok) {
             throw new Error(`Error al cargar el template: ${response.status} ${response.statusText}`);
@@ -29,6 +35,10 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
         // INICIALIZAR TEMA AQUÍ, después de inyectar el HTML y antes del setTimeout
         initializeTheme();
         console.log('[AxFinder] Tema inicializado después de cargar el template.');
+
+        // INICIALIZAR MODAL DE SUBIDA DE METADATOS
+        initializeMetadataUploadModal();
+        console.log('[AxFinder] Modal de subida de metadatos inicializado después de cargar el template.');
 
         // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template o scripts dependientes del DOM específico del template
         setTimeout(async () => {
@@ -66,6 +76,7 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
 
                 const gridBtn = document.getElementById('grid-btn');
                 const listBtn = document.getElementById('list-btn');
+                const uploadFileBtn = document.getElementById('upload-file-btn');
 
                 if (!gridBtn || !listBtn) {
                     console.error("Botones de vista (grid-btn o list-btn) no encontrados DESPUÉS de cargar el template.");
@@ -73,6 +84,14 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
                     console.log("Botones de vista encontrados. Añadiendo listeners.");
                     gridBtn.addEventListener('click', () => setViewMode('grid'));
                     listBtn.addEventListener('click', () => setViewMode('list'));
+                }
+
+                if (uploadFileBtn) {
+                    uploadFileBtn.addEventListener('click', () => {
+                        openMetadataModal(); // Llama sin argumentos para una nueva subida
+                    });
+                } else {
+                    console.warn('[AxFinder] Botón de subir archivo (upload-file-btn) no encontrado.');
                 }
 
                 // 5. CARGAR ARCHIVOS (renderFiles usará el config.currentViewMode ya establecido)

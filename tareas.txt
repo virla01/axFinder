@@ -1,0 +1,28 @@
+De acuerdo. Aquí tienes un resumen de las tareas pendientes y posibles siguientes pasos para mañana:
+Funcionalidades Principales Pendientes:
+Modal de Subida de Metadatos (#metadata-modal en metadataUploadModal.js):
+Implementar la subida real: Actualmente, la función handleFormSubmit solo simula el envío del formulario. Es necesario conectarla con el script PHP del backend para subir la imagen y sus metadatos.
+Refrescar la vista de archivos: Después de una subida exitosa, la lista/cuadrícula de archivos debería actualizarse para mostrar el nuevo elemento.
+Gestión de Metadatos de Imágenes Existentes (en fileDisplay.js y backend):
+Habilitar edición: Modificar el modal que muestra los metadatos de una imagen (showImageModal) para que los campos sean editables.
+Botón "Guardar": Añadir un botón "Guardar" a este modal.
+API para guardar metadatos: Crear un endpoint en el backend (files.php) que reciba los metadatos actualizados y guarde los cambios en el archivo .meta.json correspondiente.
+Conectar el botón "Guardar" del frontend a esta nueva API.
+Backend (files.php):
+Miniaturas:
+Implementar la lógica para generar miniaturas en el servidor cuando se sube una nueva imagen.
+Guardar estas miniaturas en una subcarpeta oculta (ej. .thumbnails) dentro de la carpeta de la imagen original.
+Modificar files.php para que, al listar archivos, proporcione la thumbnailUrl si existe una miniatura para una imagen, e ignore las carpetas .thumbnails.
+Archivos .meta.json:
+Al subir una nueva imagen, el backend debe crear automáticamente un archivo .meta.json asociado (puede estar vacío o con valores por defecto).
+Asegurarse de que files.php lee estos archivos .meta.json y envía sus datos al frontend junto con la información de cada archivo.
+Endpoint de subida: Desarrollar el script PHP que recibirá la imagen y los metadatos del #metadata-modal.
+Mejoras y Tareas Generales:
+Internacionalización (i18n.js):
+Traducciones completas: Revisar la interfaz de usuario para identificar textos que no estén usando la función t() y añadir las claves de traducción necesarias a los archivos (es.json, en.json, etc.). Por ejemplo, el título "Configuración" en el panel lateral.
+Interpolación en t(): Mejorar la función t() para que permita pasar variables y realizar interpolación de cadenas (ej. para mensajes como "Editando: {{fileName}}").
+Panel de Configuración (#config-menu):
+Implementar la lógica de las opciones: Conectar las diferentes opciones del menú de configuración (mostrar/ocultar nombre de archivo, fecha, tamaño; cambiar tipo de vista; ordenar archivos; cambiar tema) para que realmente afecten el comportamiento y la apariencia de AxFinder.
+Manejo de Errores y Experiencia de Usuario (UX):
+Revisar los mensajes de error y notificaciones para asegurar que sean claros, traducibles y ofrezcan una buena experiencia al usuario.
+Mañana podemos empezar por donde prefieras, ya sea continuando con la funcionalidad de subida del modal, abordando la edición de metadatos, o trabajando en alguna de las mejoras del backend o la internacionalización.
