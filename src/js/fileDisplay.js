@@ -111,7 +111,7 @@ export function setViewMode(mode) {
         // Si usamos list como fallback:
         if (listViewContainer) listViewContainer.classList.remove('hidden');
         if (gridViewContainer) gridViewContainer.classList.add('hidden');
-        if (listViewContainer) listViewContainer.className = 'space-y-1 p-2'; // Ejemplo: menos espacio, menos padding
+        if (listViewContainer) listViewContainer.className = 'p-2 space-y-1'; // Ejemplo: menos espacio, menos padding
         if (filesContainer) filesContainer.className = '';
         if (listBtnToolbar) listBtnToolbar.classList.add('active'); // O un botón dedicado si existe
         config.currentViewMode = 'compact';
@@ -227,6 +227,15 @@ function renderFiles(files, currentPath) {
     const showDate = getDisplaySetting(LS_SHOW_DATE, true);
     const showSize = getDisplaySetting(LS_SHOW_FILE_SIZE, true);
 
+    // Helper para obtener la URL de la miniatura o la original
+    const getPreviewSrc = (item) => {
+        if (item.thumbnailUrls) {
+            if (item.thumbnailUrls['300']) return item.thumbnailUrls['300'];
+            if (item.thumbnailUrls['600']) return item.thumbnailUrls['600']; // Fallback a 600px si 300px no existe
+        }
+        return item.imageUrl; // Fallback final a la imagen original
+    };
+
     files.forEach(item => {
         const itemIconSvg = item.icon || ''; // SVG del icono desde el backend
 
@@ -249,14 +258,15 @@ function renderFiles(files, currentPath) {
                 `;
             } else if (item.imageUrl) {
                 console.log(`[DEBUG RenderImgGrid] Item: ${item.name}, mtime: ${item.mtime}, size: ${item.size}`);
-                gridItem.className = 'transition-shadow shadow cursor-pointer file-item group hover:shadow-lg flex flex-col items-center bg-white rounded-lg overflow-hidden border border-gray-200';
+                gridItem.className = 'flex flex-col items-center overflow-hidden transition-shadow bg-white border border-gray-200 rounded-lg shadow cursor-pointer file-item group hover:shadow-lg';
                 gridItem.setAttribute('data-image-url', item.imageUrl);
 
+                const previewSrc = getPreviewSrc(item);
                 const fileSizeDisplay = item.size !== undefined && item.size !== null ? item.size : '';
                 const fileDateDisplay = item.mtime ? new Date(item.mtime * 1000).toLocaleDateString() : '';
 
                 gridItem.innerHTML = `
-                    <div class="w-full h-32 bg-gray-200 bg-cover bg-center relative" style="background-image: url('${item.imageUrl}');">
+                    <div class="w-full h-32 bg-gray-200 bg-cover bg-center relative" style="background-image: url('${previewSrc}');">
                         <div class="grid-img-tool w-full flex justify-center bg-white/80 absolute bottom-0 px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <ul class="grid grid-cols-3 gap-1.5 w-22">
                                 <li class="flex w-8 h-8 justify-center items-center rounded-full p-2 hover:bg-blue-800/10 hover:text-blue-600 cursor-pointer action-view" alt="Ver" title="Ver archivo" data-action="view">
@@ -296,7 +306,7 @@ function renderFiles(files, currentPath) {
 
         } else if (config.currentViewMode === 'list') {
             const listItem = document.createElement('div');
-            listItem.className = 'file-item-list group bg-white rounded-tr-md rounded-br-md shadow-sm hover:shadow-lg hover:bg-blue-50/50 transition-colors flex items-center file-item'; // Añadido file-item para consistencia de selectores de visibilidad
+            listItem.className = 'flex items-center transition-colors bg-white shadow-sm file-item-list group rounded-tr-md rounded-br-md hover:shadow-lg hover:bg-blue-50/50 file-item'; // Añadido file-item para consistencia de selectores de visibilidad
             listItem.setAttribute('data-file-path', item.path);
             listItem.setAttribute('data-file-type', item.type);
             listItem.setAttribute('data-file-name', item.name);
@@ -307,7 +317,8 @@ function renderFiles(files, currentPath) {
                 // O mantenemos el itemIconSvg que podría ser específico del backend.
                 listIconHtml = `<div class="flex-shrink-0 w-10 h-10 text-blue-500 flex items-center justify-center p-2">${itemIconSvg || icons.defaultFolderIcon || '📁'}</div>`;
             } else if (item.imageUrl) {
-                listIconHtml = `<img src="${item.imageUrl}" alt="${item.name}" class="w-20 h-19 object-cover">`; // Clases de list.html
+                const previewSrc = getPreviewSrc(item);
+                listIconHtml = `<img src="${previewSrc}" alt="${item.name}" class="w-20 h-19 object-cover">`; // Clases de list.html
                 listItem.setAttribute('data-image-url', item.imageUrl);
             } else {
                 // Para otros archivos, usamos el SVG si está disponible, sino un ícono genérico de archivo
@@ -485,7 +496,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
     // Crear overlay
     const overlay = document.createElement('div');
     overlay.id = 'ax-image-modal-overlay';
-    overlay.className = 'fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center p-4'; // p-4 para espacio alrededor del modal
+    overlay.className = 'fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-75'; // p-4 para espacio alrededor del modal
     overlay.addEventListener('click', () => closeModal());
 
     // Crear contenedor del modal (el recuadro blanco general)
@@ -496,7 +507,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
 
     // Contenedor para el nombre del archivo y el botón de cierre (HIJO DE modalContent)
     const headerControlsContainer = document.createElement('div');
-    headerControlsContainer.className = 'flex justify-between items-center w-full mb-3 px-1'; // px-1 para un pequeño margen lateral interno
+    headerControlsContainer.className = 'flex items-center justify-between w-full px-1 mb-3'; // px-1 para un pequeño margen lateral interno
 
     // Nombre del archivo (dentro de headerControlsContainer, alineado a la izquierda por flex)
     const nameElement = document.createElement('div');
@@ -507,7 +518,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
     // Botón de cierre (dentro de headerControlsContainer, alineado a la derecha por flex)
     const closeButtonElement = document.createElement('button');
     closeButtonElement.textContent = 'X';
-    closeButtonElement.className = 'text-black hover:text-gray-700 text-xl ml-auto font-semibold'; // Clases simplificadas
+    closeButtonElement.className = 'ml-auto text-xl font-semibold text-black hover:text-gray-700'; // Clases simplificadas
     closeButtonElement.style.backgroundColor = 'transparent';
     closeButtonElement.style.border = 'none';
     closeButtonElement.style.padding = '0.1rem 0.3rem'; // Padding aún más sutil para que no sea muy grande
@@ -522,7 +533,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
 
     // Contenedor específico para la imagen (HIJO DE modalContent, después de headerControlsContainer)
     const imageWrapper = document.createElement('div');
-    imageWrapper.className = 'w-full h-full flex-grow flex flex-col items-center justify-center overflow-hidden'; // Eliminado pt-3
+    imageWrapper.className = 'flex flex-col items-center justify-center flex-grow w-full h-full overflow-hidden'; // Eliminado pt-3
 
     // Imagen (dentro de imageWrapper)
     const img = document.createElement('img');
@@ -543,7 +554,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
         prevButton.id = 'ax-modal-prev-btn';
         prevButton.innerHTML = '&#10094;'; // <
         // Estilo para estar en el overlay, a la izquierda del modalContent
-        prevButton.className = 'absolute left-5 top-1/2 -translate-y-1/2 text-4xl text-white opacity-60 hover:opacity-90 focus:outline-none z-50 p-3 rounded-full bg-black bg-opacity-20 hover:bg-opacity-40 transition-all';
+        prevButton.className = 'absolute z-50 p-3 text-4xl text-white transition-all -translate-y-1/2 bg-black rounded-full left-5 top-1/2 opacity-60 hover:opacity-90 focus:outline-none bg-opacity-20 hover:bg-opacity-40';
         prevButton.title = 'Anterior';
         prevButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -555,7 +566,7 @@ function showImageModal(imageUrl, imageName, allImages = [], index = -1) {
         nextButton.id = 'ax-modal-next-btn';
         nextButton.innerHTML = '&#10095;'; // >
         // Estilo para estar en el overlay, a la derecha del modalContent
-        nextButton.className = 'absolute right-5 top-1/2 -translate-y-1/2 text-4xl text-white opacity-60 hover:opacity-90 focus:outline-none z-50 p-3 rounded-full bg-black bg-opacity-20 hover:bg-opacity-40 transition-all';
+        nextButton.className = 'absolute z-50 p-3 text-4xl text-white transition-all -translate-y-1/2 bg-black rounded-full right-5 top-1/2 opacity-60 hover:opacity-90 focus:outline-none bg-opacity-20 hover:bg-opacity-40';
         nextButton.title = 'Siguiente';
         nextButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -658,4 +669,3 @@ export function clearFileView() {
     }
     config.currentPath = '.';
 }
-

@@ -59,4 +59,26 @@ $axFinderConfig = [
         // ... más tipos de archivo
     ],
     */
+    'watermark' => [
+        'enabled' => true, // Poner a true para habilitar la marca de agua en las miniaturas
+        'type' => 'image',  // 'image' o 'text'
+
+        // Configuración para marca de agua de tipo 'image'
+        // Asegúrate de que esta ruta sea correcta y el archivo exista.
+        // Ejemplo: si config.php está en src/config y watermark.png está en la raíz en una carpeta 'assets'
+    'image_path' => __DIR__ . '/../../assets/watermark.png', // Corregido para subir dos niveles
+
+        // Configuración para marca de agua de tipo 'text'
+        // 'text' => '© AxFinder ' . date('Y'),
+        // 'font_path' => __DIR__ . '/../../assets/fonts/arial.ttf', // Ruta a un archivo de fuente .TTF
+        // 'font_size' => 16, // Tamaño de la fuente en puntos
+        // 'color' => [255, 255, 255], // Color del texto en RGB (ej. blanco)
+        // 'text_background_color' => null, // Opcional: [0,0,0] para fondo negro, null para sin fondo
+        // 'text_background_opacity' => 70, // Opacidad del fondo del texto (0-100) si se usa
+
+        'opacity' => 30,        // Opacidad de la marca de agua (0=transparente, 100=opaca)
+        'position' => 'center', // Opciones: 'center', 'top-center', 'bottom-center',
+                                // 'top-left', 'top-right', 'bottom-left', 'bottom-right'
+        'margin' => 10,         // Margen en píxeles (para posiciones de esquina y top/bottom-center)
+    ],
 ];

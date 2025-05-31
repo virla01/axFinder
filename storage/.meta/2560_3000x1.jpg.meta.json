@@ -1,0 +1,16 @@
+{
+    "caption": "olas",
+    "author": "Lalo",
+    "source": "lalo",
+    "tags": "Figuras, colores, etx",
+    "keywords": "fondo de pantalla",
+    "originalName": "2560_3000x1.jpg",
+    "size": 366979,
+    "mimeType": "image/jpeg",
+    "uploadedAt": "2025-05-31T18:16:52+00:00",
+    "thumbnails": {
+        "300": ".thumbnails/2560_3000x1_300.jpg",
+        "600": ".thumbnails/2560_3000x1_600.jpg",
+        "1200": ".thumbnails/2560_3000x1_1200.jpg"
+    }
+}
