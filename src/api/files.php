@@ -969,6 +969,49 @@ try {
             exit;
         }
         handleUpload($baseDir);
+    } elseif ($action === 'create_folder') {
+        $currentPath = $_GET['path'] ?? '';
+        $folderName = $_GET['folder_name'] ?? '';
+
+        if (empty($folderName)) {
+            ResponseHandler::error('El nombre de la carpeta no puede estar vacío.', 400);
+            exit;
+        }
+
+        // Validar nombre de carpeta (caracteres no permitidos)
+        // Aunque el frontend ya valida, es crucial validar también en el backend.
+        $invalidChars = '/[\\/:*?"<>|]/';
+        if (preg_match($invalidChars, $folderName)) {
+            ResponseHandler::error('El nombre de la carpeta contiene caracteres no válidos (\\ / : * ? " < > |).', 400);
+            exit;
+        }
+
+        // Construir la ruta completa de la nueva carpeta
+        // Asegurarse de que $currentPath no sea solo '.' si estamos en la raíz
+        $targetRelativePath = !empty($currentPath) && $currentPath !== '.' ? $currentPath . DIRECTORY_SEPARATOR . $folderName : $folderName;
+
+        $newFolderPath = getSafePath($baseDir, $targetRelativePath, false, false); // No checkExists, no isFile
+
+        if ($newFolderPath === false) {
+            error_log("[create_folder] getSafePath falló para baseDir: '$baseDir', targetRelativePath: '$targetRelativePath'");
+            ResponseHandler::error('Ruta de destino inválida o no segura para la creación de carpeta.', 400);
+            exit;
+        }
+
+        // Verificar si la carpeta ya existe
+        if (is_dir($newFolderPath)) {
+            ResponseHandler::error('La carpeta ya existe.', 409); // 409 Conflict
+            exit;
+        }
+
+        // Intentar crear la carpeta
+        if (mkdir($newFolderPath, 0755, true)) { // 0755 permisos, true para creación recursiva
+            error_log("[create_folder] Carpeta creada exitosamente: $newFolderPath");
+            ResponseHandler::json(['success' => true, 'message' => 'Carpeta creada exitosamente.', 'path' => $targetRelativePath]);
+        } else {
+            error_log("[create_folder] Error al crear la carpeta: $newFolderPath. Verificar permisos.");
+            ResponseHandler::error('Error al crear la carpeta. Verifique los permisos del servidor.', 500);
+        }
     } elseif ($action === 'updateMetadata') {
         // Asegúrate que $baseDir esté definida globalmente.
         if (!isset($baseDir) || !is_string($baseDir) || empty($baseDir)) {

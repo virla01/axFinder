@@ -7,6 +7,7 @@ import { UIElements } from './src/js/uiElements.js';
 import { initializeConfigMenu, LS_VIEW_MODE, getViewModeSetting, initializeTheme } from './src/js/configMenu.js';
 import { api } from './src/js/apiService.js'; // Importar el servicio de API
 import { initializeMetadataUploadModal, openMetadataModal } from './src/js/metadataUploadModal.js';
+import { initCreateFolderModal } from './src/js/createFolderModal.js'; // Importar initCreateFolderModal
 import { initI18n } from './src/js/i18n.js'; // Importar initI18n
 
 /**
@@ -39,6 +40,10 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
         // INICIALIZAR MODAL DE SUBIDA DE METADATOS
         initializeMetadataUploadModal();
         console.log('[AxFinder] Modal de subida de metadatos inicializado después de cargar el template.');
+
+        // INICIALIZAR MODAL DE CREACIÓN DE CARPETA
+        initCreateFolderModal();
+        console.log('[AxFinder] Modal de creación de carpeta inicializado después de cargar el template.');
 
         // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template o scripts dependientes del DOM específico del template
         setTimeout(async () => {

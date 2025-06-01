@@ -80,7 +80,7 @@ async function handleSubmit() {
             // Si la nueva carpeta está dentro de la vista actual, refrescar archivos
             // Esto es un poco más complejo, ya que la nueva carpeta no se seleccionará automáticamente.
             // Por ahora, simplemente recargamos la vista actual.
-            if (UIElements.filesContainer()) {
+            if (UIElements.fileDisplayArea()) {
                 await loadFiles(currentPath); // Recargar archivos de la carpeta actual
             }
             console.log(`Carpeta '${folderName}' creada exitosamente.`);
