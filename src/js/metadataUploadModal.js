@@ -49,7 +49,8 @@ export function initializeMetadataUploadModal() {
 
     // El botón de cierre es el span dentro del modal-content
     if (metadataModal) {
-        closeButton = metadataModal.querySelector('.modal-content > .close');
+        // Ahora el botón de cierre está dentro de un div con clase 'flex'
+        closeButton = metadataModal.querySelector('.modal-content .flex > .close');
     }
 
     if (!metadataModal || !modalImagePreview || !modalFileInput || !modalSelectFileButton || !modalDragDropText || !modalForm || !closeButton || !modalFileNameTitle || !modalImagePreviewContainer || !captionLabel || !authorLabel || !publishDateLabel || !sourceLabel || !tagsLabel || !metadataTagsInput || !keywordsLabel || !metadataKeywordsInput || !saveAndUploadButton) {
@@ -271,4 +272,4 @@ async function handleFormSubmit(event) {
 }
 
 // Para pruebas, podrías añadir un botón en algún lugar de tu UI principal que llame a openMetadataModal().
-// Ejemplo: document.getElementById('boton-abrir-modal-subida').addEventListener('click', openMetadataModal); 
+// Ejemplo: document.getElementById('boton-abrir-modal-subida').addEventListener('click', openMetadataModal);

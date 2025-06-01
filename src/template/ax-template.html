@@ -233,13 +233,16 @@
 <!-- Metadata Upload Modal -->
 <div id="metadata-modal" class="modal" style="display: none;">
     <div class="modal-content">
-        <span class="btn btn-rounded close" style="margin-left:auto;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" class="w-4 h-4">
-                <path fill="currentColor"
-                    d="M207.6 256l107.72-107.72c6.23-6.23 6.23-16.34 0-22.58l-25.03-25.03c-6.23-6.23-16.34-6.23-22.58 0L160 208.4 52.28 100.68c-6.23-6.23-16.34-6.23-22.58 0L4.68 125.7c-6.23 6.23-6.23 16.34 0 22.58L112.4 256 4.68 363.72c-6.23 6.23-6.23 16.34 0 22.58l25.03 25.03c6.23 6.23 16.34 6.23 22.58 0L160 303.6l107.72 107.72c6.23 6.23 16.34 6.23 22.58 0l25.03-25.03c6.23-6.23 6.23-16.34 0-22.58L207.6 256z"
-                    class=""></path>
-            </svg></span>
-        <h2 id="modal-file-name">${t('modal.metadataTitle')}</h2>
+        <div class="flex justify-between mb-2">
+            <h2 id="modal-file-name">${t('modal.metadataTitle')}</h2>
+            <span class="btn btn-rounded-full close">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" class="w-4 h-4">
+                    <path fill="currentColor"
+                        d="M207.6 256l107.72-107.72c6.23-6.23 6.23-16.34 0-22.58l-25.03-25.03c-6.23-6.23-16.34-6.23-22.58 0L160 208.4 52.28 100.68c-6.23-6.23-16.34-6.23-22.58 0L4.68 125.7c-6.23 6.23-6.23 16.34 0 22.58L112.4 256 4.68 363.72c-6.23 6.23-6.23 16.34 0 22.58l25.03 25.03c6.23 6.23 16.34 6.23 22.58 0L160 303.6l107.72 107.72c6.23 6.23 16.34 6.23 22.58 0l25.03-25.03c6.23-6.23 6.23-16.34 0-22.58L207.6 256z"
+                        class=""></path>
+                </svg>
+            </span>
+        </div>
 
         <!-- Contenedor para la previsualización de la imagen y el input de archivo -->
         <div id="modal-image-upload-container" style="margin-bottom: 20px;">
@@ -250,7 +253,7 @@
                 <span id="modal-drag-drop-text" style="color: #aaa;">${t('modal.dragDropText')}</span>
             </div>
             <input type="file" id="modal-file-input" accept="image/*" style="display: none;">
-            <button type="button" id="modal-select-file-button" class="ax-btn ax-btn-normal"
+            <button type="button" id="modal-select-file-button" class="btn btn-green"
                 style="width: 100%;">${t('modal.selectFileButton')}</button>
         </div>
 
@@ -264,22 +267,22 @@
 
             <div class="form-row" style="display: flex; gap: 20px;">
                 <div class="form-group" style="flex: 1;">
-                    <label for="author">${t('modal.authorLabel')}:</label>
+                    <label for="author" class="">${t('modal.authorLabel')}:</label>
                     <input type="text" id="author" name="author" style="width: 100%;">
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label for="publish-date">${t('modal.publishDateLabel')}:</label>
+                    <label for="publish-date" class="">${t('modal.publishDateLabel')}:</label>
                     <input type="date" id="publish-date" name="publish-date" style="width: 100%;">
                 </div>
             </div>
 
             <div class="form-row" style="display: flex; gap: 20px;">
                 <div class="form-group" style="flex: 1;">
-                    <label for="source">${t('modal.sourceLabel')}:</label>
+                    <label for="source" class="">${t('modal.sourceLabel')}:</label>
                     <input type="text" id="source" name="source" style="width: 100%;">
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label for="metadata-tags">${t('modal.tagsLabel')}:</label>
+                    <label for="metadata-tags" class="">${t('modal.tagsLabel')}:</label>
                     <input type="text" id="metadata-tags" name="tags" placeholder="${t('modal.tagsPlaceholder')}"
                         style="width: 100%;">
                 </div>
@@ -287,13 +290,14 @@
 
             <div class="form-row">
                 <div class="form-group" style="width: 100%;">
-                    <label for="metadata-keywords">${t('modal.keywordsLabel')}:</label>
+                    <label for="metadata-keywords" class="">${t('modal.keywordsLabel')}:</label>
                     <input type="text" id="metadata-keywords" name="keywords"
                         placeholder="${t('modal.keywordsPlaceholder')}" style="width: 100%;">
                 </div>
             </div>
-
-            <button type="submit" style="margin-top: 20px; width: 100%;">${t('modal.saveAndUploadButton')}</button>
+            <div class="flex justify-end w-full">
+                <button type="submit" class="btn btn-blue">${t('modal.saveAndUploadButton')}</button>
+            </div>
         </form>
     </div>
 </div>

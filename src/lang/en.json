@@ -31,7 +31,7 @@
 	"drop_files_here": "Drop files here to upload",
 	"select_files": "Select files",
 	"file_selected": "File selected",
-	"modal.metadataTitle": "File Metadata",
+	"modal.metadataTitle": "Upload file and metadata",
 	"modal.imagePreviewAlt": "Image Preview",
 	"modal.dragDropText": "Drag & drop an image here or click to select",
 	"modal.selectFileButton": "Select File",

@@ -6,6 +6,15 @@ body {
 	@apply h-full p-0 m-0 mt-8 dark:bg-slate-900;
 }
 
+textarea,
+input {
+	@apply mb-4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+}
+
+label {
+	@apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
+}
+
 /* Content gral. */
 .ax-finder {
 	@apply relative flex flex-col w-full max-h-[37.5rem] overflow-hidden border border-blue-200 dark:border-slate-700 rounded-lg;
@@ -125,7 +134,11 @@ body {
 
 /* Estilos para el modal de imagen */
 .modal-content {
-	@apply bg-white max-w-[37.5rem] mx-auto flex flex-col border border-slate-200 dark:border-slate-700 rounded-lg;
+	@apply bg-white max-w-[37.5rem] mx-auto flex flex-col border border-slate-200 dark:border-slate-700 rounded-lg p-4;
+}
+
+.modal-file-name {
+	@apply py-2;
 }
 
 #ax-image-modal-overlay {
@@ -194,6 +207,14 @@ svg.close {
 
 .btn.active {
 	@apply bg-blue-50/95 dark:bg-slate-500/40;
+}
+
+.btn-green {
+	@apply mb-2 text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800;
+}
+
+.btn-blue {
+	@apply text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
 }
 
 ::-webkit-scrollbar {
