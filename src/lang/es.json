@@ -57,5 +57,22 @@
 	"modal.uploadErrorLog": "Error al subir archivo con metadatos:",
 	"modal.uploadErrorAlert": "Error al subir el archivo. Error: {error}",
 	"modal.fileSelectedForUpload": "Archivo seleccionado: {fileName}",
-	"modal.metadataFor": "Metadatos para:"
+	"modal.metadataFor": "Metadatos para:",
+    "createFolderModal.title": "Crear Nueva Carpeta",
+    "createFolderModal.folderNameLabel": "Nombre de la carpeta:",
+    "createFolderModal.folderNamePlaceholder": "Ej: Documentos importantes",
+    "createFolderModal.createButton": "Crear",
+    "renameFolderModal.title": "Renombrar Carpeta",
+    "renameFolderModal.currentNameLabel": "Nombre actual:",
+    "renameFolderModal.newNameLabel": "Nuevo nombre:",
+    "renameFolderModal.newNamePlaceholder": "Introduce el nuevo nombre",
+    "renameFolderModal.renameButton": "Renombrar",
+    "renameFolderModal.renamingButton": "Renombrando...",
+    "renameFolderModal.errorEmptyName": "El nombre de la carpeta no puede estar vacío.",
+    "renameFolderModal.errorInvalidChars": "El nombre contiene caracteres no válidos (ej: <>:\"/\\|?*).",
+    "renameFolderModal.successMessage": "Carpeta '{oldName}' renombrada a '{newName}' con éxito.",
+    "renameFolderModal.errorGeneric": "Error al renombrar la carpeta. Inténtalo de nuevo.",
+    "renameFolderModal.errorException": "Ocurrió un error inesperado al intentar renombrar.",
+    "error.invalidFolderName": "El nombre de carpeta '{NAME}' no es válido. No se permiten '.' ni '..'.",
+    "renameFolderModal.errorConflict": "No se pudo renombrar: Ya existe un elemento con el nombre '{NAME}'."
 }

@@ -360,6 +360,7 @@ if ($imageType == IMAGETYPE_PNG || $imageType == IMAGETYPE_WEBP) {
  * @return string|false La ruta absoluta segura y resuelta, o false si la validación falla.
  */
 function getSafePath(string $baseDir, string $relativePath, bool $checkExists = false, bool $isFile = false): string|false {
+    error_log("[getSafePath] Llamada con: baseDir='".basename($baseDir)."', relativePath='$relativePath', checkExists=".($checkExists?'true':'false').", isFile=".($isFile?'true':'false')); // Log baseDir name only for brevity
     // Normalizar slashes y limpiar la ruta relativa
     $normalizedPath = str_replace('\\', '/', $relativePath);
     $normalizedPath = trim($normalizedPath, '/'); // Quitar slashes al inicio y final
@@ -640,6 +641,53 @@ function handleUpdateMetadata(string $baseDir): void {
     }
 }
 
+/**
+ * Elimina un directorio y todo su contenido de forma recursiva.
+ *
+ * @param string $path La ruta al directorio a eliminar.
+ * @return bool True si la eliminación fue exitosa, False en caso contrario.
+ */
+function deleteRecursive(string $path): bool {
+    if (!is_dir($path)) {
+        error_log("[deleteRecursive] La ruta no es un directorio: $path");
+        return false; // No es un directorio, no se puede procesar como tal
+    }
+
+    // Usar RecursiveDirectoryIterator y RecursiveIteratorIterator para manejar la recursión
+    // SPL (Standard PHP Library) es más robusto para estas tareas.
+    try {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $fileinfo) {
+            if ($fileinfo->isDir()) {
+                if (!rmdir($fileinfo->getRealPath())) {
+                    error_log("[deleteRecursive] No se pudo eliminar el subdirectorio: " . $fileinfo->getRealPath());
+                    return false; // Fallo al eliminar un subdirectorio
+                }
+            } else { // Es un archivo
+                if (!unlink($fileinfo->getRealPath())) {
+                    error_log("[deleteRecursive] No se pudo eliminar el archivo: " . $fileinfo->getRealPath());
+                    return false; // Fallo al eliminar un archivo
+                }
+            }
+        }
+
+        // Finalmente, eliminar el directorio raíz (ahora vacío)
+        if (!rmdir($path)) {
+            error_log("[deleteRecursive] No se pudo eliminar el directorio raíz (después de vaciarlo): $path");
+            return false;
+        }
+    } catch (Exception $e) {
+        error_log("[deleteRecursive] Excepción durante la eliminación recursiva de '$path': " . $e->getMessage());
+        return false;
+    }
+
+    return true;
+}
+
 // FIN DE FUNCIONES A AÑADIR/ASEGURAR QUE EXISTEN AQUÍ
 
 // Depuración inicial para verificar $baseDir
@@ -789,7 +837,7 @@ try {
         }
 
         // Log para depurar los parámetros de ordenación recibidos
-        error_log("[list_files] Parámetros de ordenación recibidos - sortBy: {$sortBy}, sortOrder: {$sortOrder}");
+        //error_log("[list_files] Parámetros de ordenación recibidos - sortBy: {$sortBy}, sortOrder: {$sortOrder}");
 
         if (!$folderName) {
             ResponseHandler::error('Nombre de carpeta no proporcionado.', 400);
@@ -807,7 +855,7 @@ try {
             realpath($targetDir) === false ||
             strpos(realpath($targetDir), realpath($baseDir)) !== 0
            ) {
-            error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
+            //error_log("[list_files] Intento de Path Traversal detectado o nombre de carpeta inválido: $folderName");
             ResponseHandler::error('Nombre de carpeta inválido.', 400);
             exit;
         }
@@ -890,20 +938,20 @@ try {
                     $metaDir = rtrim($targetDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
                     $metadataFilePath = rtrim($metaDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $item . '.meta.json';
 
-                    error_log("[list_files] Buscando metadatos para $item en: $metadataFilePath");
+                    //error_log("[list_files] Buscando metadatos para $item en: $metadataFilePath");
 
                     if (is_file($metadataFilePath) && is_readable($metadataFilePath)) {
                         $metadataJson = file_get_contents($metadataFilePath);
                         $metadata = json_decode($metadataJson, true);
                         if (json_last_error() === JSON_ERROR_NONE) {
                             $fileData['metadata'] = $metadata;
-                            error_log("[list_files] Metadatos cargados para $item: " . print_r($metadata, true));
+                            //error_log("[list_files] Metadatos cargados para $item: " . print_r($metadata, true));
                         } else {
-                            error_log("[list_files] Error al decodificar JSON de metadatos para $item de $metadataFilePath: " . json_last_error_msg());
+                            //error_log("[list_files] Error al decodificar JSON de metadatos para $item de $metadataFilePath: " . json_last_error_msg());
                             $fileData['metadata'] = null;
                         }
                     } else {
-                        error_log("[list_files] Archivo de metadatos no encontrado o no legible para $item en $metadataFilePath");
+                        //error_log("[list_files] Archivo de metadatos no encontrado o no legible para $item en $metadataFilePath");
                         $fileData['metadata'] = null;
                     }
 
@@ -956,7 +1004,7 @@ try {
                 return ($sortOrder === 'asc') ? $comparison : -$comparison;
             });
         }
-        error_log("[list_files] Items después de ordenar: " . print_r(array_column($items, 'name'), true));
+        //error_log("[list_files] Items después de ordenar: " . print_r(array_column($items, 'name'), true));
 
         ResponseHandler::json(['success' => true, 'items' => $items, 'folder' => $folderName]);
 
@@ -972,6 +1020,11 @@ try {
     } elseif ($action === 'create_folder') {
         $currentPath = $_GET['path'] ?? '';
         $folderName = $_GET['folder_name'] ?? '';
+
+        if ($folderName === '.' || $folderName === '..') {
+            ResponseHandler::error(translate('error.invalidFolderName', ['NAME' => $folderName]), 400);
+            exit;
+        }
 
         if (empty($folderName)) {
             ResponseHandler::error('El nombre de la carpeta no puede estar vacío.', 400);
@@ -1020,6 +1073,212 @@ try {
             exit;
         }
         handleUpdateMetadata($baseDir);
+    } elseif ($action === 'check_folder_empty') {
+        $relativePath = $_GET['path'] ?? '';
+
+        if (empty($relativePath)) {
+            ResponseHandler::error('La ruta de la carpeta no fue proporcionada.', 400);
+            exit;
+        }
+
+        $folderPath = getSafePath($baseDir, $relativePath, true, false); // checkExists = true, isFile = false
+
+        if ($folderPath === false) {
+            error_log("[check_folder_empty] getSafePath falló para baseDir: '$baseDir', relativePath: '$relativePath'");
+            ResponseHandler::error('Ruta de carpeta inválida o no segura.', 400);
+            exit;
+        }
+
+        if (!is_dir($folderPath)) {
+            error_log("[check_folder_empty] La ruta no es un directorio: '$folderPath'");
+            ResponseHandler::error('La ruta especificada no es un directorio.', 404);
+            exit;
+        }
+
+        $isEmpty = true;
+        $items = scandir($folderPath);
+        if ($items === false) {
+            error_log("[check_folder_empty] scandir() falló para el directorio: $folderPath");
+            ResponseHandler::error('No se pudo leer el contenido de la carpeta.', 500);
+            exit;
+        }
+
+        foreach ($items as $item) {
+            if ($item !== '.' && $item !== '..') {
+                $isEmpty = false;
+                break;
+            }
+        }
+        error_log("[check_folder_empty] Carpeta '$folderPath' está vacía: " . ($isEmpty ? 'Sí' : 'No'));
+        ResponseHandler::json(['success' => true, 'isEmpty' => $isEmpty, 'path' => $relativePath]);
+
+    } elseif ($action === 'rename_folder') {
+            error_log("[rename_folder] ACCIÓN INVOCADA: rename_folder iniciada."); // NUEVO LOG INICIAL
+        // Verificar que la solicitud sea POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            ResponseHandler::error('Método no permitido para renombrar. Se requiere POST.', 405);
+            exit;
+        }
+
+        // Obtener parámetros de la solicitud (esperados como x-www-form-urlencoded)
+        $currentRelativePath = $_POST['path'] ?? null;
+        $newName = $_POST['new_name'] ?? null;
+
+        error_log("[rename_folder] Intentando renombrar. Ruta actual relativa: '$currentRelativePath', Nuevo nombre: '$newName'");
+
+        if (empty($currentRelativePath) || is_null($newName)) { // newName puede ser "0", así que no usar empty()
+            ResponseHandler::error('La ruta actual y el nuevo nombre son obligatorios.', 400);
+            exit;
+        }
+        if (empty(trim($newName))) {
+            ResponseHandler::error('El nuevo nombre no puede estar vacío o solo contener espacios.', 400);
+            exit;
+        }
+
+        // Validar caracteres en el nuevo nombre (similar al frontend)
+        // Evitar: / \ : * ? " < > | y nombres reservados como . y ..
+        if (preg_match('/[\/\\:*?"<>|]/', $newName) || $newName === '.' || $newName === '..') {
+            ResponseHandler::error('El nuevo nombre contiene caracteres no válidos o es un nombre reservado.', 400);
+            exit;
+        }
+
+        // Construir rutas absolutas seguras
+        // Para la ruta actual, esperamos que exista y sea un directorio
+        $currentAbsolutePath = getSafePath($baseDir, $currentRelativePath, true, false); // checkExists=true, isFile=false
+        if ($currentAbsolutePath === false) {
+            error_log("[rename_folder] La ruta actual '$currentRelativePath' no es válida, no existe o no es un directorio.");
+            ResponseHandler::error("La carpeta original '$currentRelativePath' no se encontró o no es válida.", 404);
+            exit;
+        }
+
+        // Construir la nueva ruta
+        // La nueva ruta no debe existir aún. getSafePath con checkExists=false
+        $parentOfCurrent = dirname($currentRelativePath);
+        if ($parentOfCurrent === '.' || $parentOfCurrent === '') $parentOfCurrent = ''; // Si está en la raíz o dirname devuelve '.'
+
+        $newRelativePath = ($parentOfCurrent ? $parentOfCurrent . DIRECTORY_SEPARATOR : '') . $newName;
+        $newAbsolutePath = getSafePath($baseDir, $newRelativePath, false, false); // checkExists=false, isFile=false
+
+        if ($newAbsolutePath === false) {
+            error_log("[rename_folder] La nueva ruta relativa '$newRelativePath' generó una ruta absoluta inválida.");
+            ResponseHandler::error("El nuevo nombre '$newName' resulta en una ruta inválida.", 400);
+            exit;
+        }
+
+        // Verificar si el destino ya existe
+        // Obtener el nombre base actual de la carpeta, ej: "Fotos"
+        $currentBaseName = basename($currentAbsolutePath);
+
+        // Verificar si el nuevo nombre (ej: "fotos") es efectivamente el mismo que el actual,
+        // difiriendo solo en mayúsculas/minúsculas.
+        $isCaseOnlyRename = (strcasecmp($currentBaseName, $newName) === 0 && strcmp($currentBaseName, $newName) !== 0);
+
+        if (file_exists($newAbsolutePath)) {
+            if ($isCaseOnlyRename) {
+                // Es un renombrado de solo mayúsculas/minúsculas (ej. "MiCarpeta" a "micarpeta").
+                // En sistemas insensibles a mayúsculas/minúsculas (como Windows), file_exists() será true.
+                // Queremos permitir este escenario específico para que proceda a la operación de renombrado.
+                error_log("[rename_folder] Permitiendo renombrado de solo mayúsculas/minúsculas para '$currentBaseName' a '$newName'. El destino '$newAbsolutePath' 'existe' debido a la insensibilidad de mayúsculas/minúsculas del sistema de archivos.");
+            } else {
+                // El destino existe y NO es un renombrado de solo mayúsculas/minúsculas del elemento actual.
+                // Esto es un conflicto genuino con un elemento diferente, o un intento de renombrar al mismo nombre exacto (sin cambio de mayúsculas/minúsculas).
+                error_log("[rename_folder] Conflicto: El destino '$newRelativePath' ('$newAbsolutePath') ya existe y no es un cambio de mayúsculas/minúsculas del original, o es el mismo nombre exacto.");
+                ResponseHandler::error(
+                    translate('renameFolderModal.errorConflict', ['NAME' => $newName]), // Usar mensaje traducido
+                    409, // HTTP 409 Conflict
+                    ['conflictingName' => $newName] // Payload para el frontend
+                );
+                exit;
+            }
+        }
+
+        // Intentar renombrar
+        error_log("[rename_folder] Renombrando de '$currentAbsolutePath' a '$newAbsolutePath'");
+        if (rename($currentAbsolutePath, $newAbsolutePath)) {
+            // Si la carpeta renombrada tenía un directorio .meta, también hay que renombrarlo
+            $currentMetaDir = rtrim($currentAbsolutePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
+            $newMetaDir = rtrim($newAbsolutePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.meta';
+            if (is_dir($currentMetaDir)) {
+                if (!rename($currentMetaDir, $newMetaDir)) {
+                    error_log("[rename_folder] Carpeta renombrada con éxito, PERO falló al renombrar el directorio de metadatos de '$currentMetaDir' a '$newMetaDir'.");
+                } else {
+                    error_log("[rename_folder] Directorio de metadatos también renombrado de '$currentMetaDir' a '$newMetaDir'.");
+                }
+            }
+            // Si la carpeta renombrada tenía un directorio .thumbnails, también hay que renombrarlo
+            $currentThumbnailsDir = rtrim($currentAbsolutePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.thumbnails';
+            $newThumbnailsDir = rtrim($newAbsolutePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.thumbnails';
+            if (is_dir($currentThumbnailsDir)) {
+                if (!rename($currentThumbnailsDir, $newThumbnailsDir)) {
+                    error_log("[rename_folder] Carpeta renombrada con éxito, PERO falló al renombrar el directorio de miniaturas de '$currentThumbnailsDir' a '$newThumbnailsDir'.");
+                } else {
+                    error_log("[rename_folder] Directorio de miniaturas también renombrado de '$currentThumbnailsDir' a '$newThumbnailsDir'.");
+                }
+            }
+
+            $parentDirOfNew = dirname($newAbsolutePath);
+            if (is_dir($parentDirOfNew)) {
+                $scanResult = scandir($parentDirOfNew);
+
+            } else {
+                error_log("[rename_folder] Directorio padre ('$parentDirOfNew') no encontrado DESPUÉS del renombrado para el log de depuración.");
+            }
+
+            ResponseHandler::json(['success' => true, 'message' => "Carpeta renombrada de '$currentRelativePath' a '$newRelativePath' con éxito."]);
+        } else {
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Error desconocido durante el renombrado.';
+            error_log("[rename_folder] Falló el renombrado de '$currentAbsolutePath' a '$newAbsolutePath'. Error PHP: $errorMessage");
+            ResponseHandler::error("No se pudo renombrar la carpeta. Error: $errorMessage", 500);
+        }
+        exit;
+    } elseif ($action === 'delete_folder') {
+        // Las acciones destructivas como esta deberían usar POST, pero $_REQUEST funciona para ambos.
+        // Sin embargo, es buena práctica verificar $_SERVER['REQUEST_METHOD'] si se quiere ser estricto.
+        $relativePath = $_POST['path'] ?? ''; // Esperamos 'path' desde una petición POST
+
+        if (empty($relativePath)) {
+            ResponseHandler::error('La ruta de la carpeta no fue proporcionada para la eliminación.', 400);
+            exit;
+        }
+
+        // Validar que la ruta no sea la raíz del almacenamiento (protección extra)
+        if (empty(trim($relativePath, DIRECTORY_SEPARATOR))) { // Si después de quitar separadores queda vacío, es la raíz.
+            error_log("[delete_folder] Intento de eliminar el directorio raíz denegado. Path: '$relativePath'");
+            ResponseHandler::error('No se permite eliminar el directorio raíz.', 403); // Forbidden
+            exit;
+        }
+        // También podrías tener una lista de carpetas protegidas
+        $protectedFolders = ['.meta', '.thumbnails']; // Añade otras si es necesario
+        $folderNameOnly = basename($relativePath);
+        if (in_array($folderNameOnly, $protectedFolders, true)) {
+             error_log("[delete_folder] Intento de eliminar carpeta protegida: '$relativePath'");
+             ResponseHandler::error("La carpeta '$folderNameOnly' está protegida y no puede ser eliminada.", 403);
+             exit;
+        }
+
+        $folderPath = getSafePath($baseDir, $relativePath, true, false); // checkExists = true, isFile = false
+
+        if ($folderPath === false) {
+            error_log("[delete_folder] getSafePath falló para baseDir: '$baseDir', relativePath: '$relativePath'");
+            ResponseHandler::error('Ruta de carpeta inválida o no segura para la eliminación.', 400);
+            exit;
+        }
+
+        if (!is_dir($folderPath)) {
+            error_log("[delete_folder] La ruta no es un directorio o no existe: '$folderPath'");
+            ResponseHandler::error('La carpeta especificada no existe o no es un directorio.', 404);
+            exit;
+        }
+
+        if (deleteRecursive($folderPath)) {
+            error_log("[delete_folder] Carpeta eliminada exitosamente: $folderPath");
+            ResponseHandler::json(['success' => true, 'message' => 'Carpeta eliminada exitosamente.', 'path' => $relativePath]);
+        } else {
+            error_log("[delete_folder] Error durante la eliminación recursiva de la carpeta: $folderPath");
+            ResponseHandler::error('Error al eliminar la carpeta. Verifique los permisos o si la carpeta está en uso.', 500);
+        }
+
     } else {
         if (empty($action)) {
             error_log("[files.php] Error: La acción está vacía o no fue proporcionada en la URL.");

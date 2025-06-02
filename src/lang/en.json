@@ -57,5 +57,22 @@
 	"modal.uploadingButton": "Uploading...",
 	"modal.uploadSuccessMessage": "Metadata and image uploaded successfully.",
 	"modal.uploadErrorMessage": "Error uploading file. Please try again.",
-	"modal.imagePreview": "Image Preview:"
+	"modal.imagePreview": "Image Preview:",
+    "createFolderModal.title": "Create New Folder",
+    "createFolderModal.folderNameLabel": "Folder Name:",
+    "createFolderModal.folderNamePlaceholder": "E.g: Important Documents",
+    "createFolderModal.createButton": "Create",
+    "renameFolderModal.title": "Rename Folder",
+    "renameFolderModal.currentNameLabel": "Current name:",
+    "renameFolderModal.newNameLabel": "New name:",
+    "renameFolderModal.newNamePlaceholder": "Enter the new name",
+    "renameFolderModal.renameButton": "Rename",
+    "renameFolderModal.renamingButton": "Renaming...",
+    "renameFolderModal.errorEmptyName": "Folder name cannot be empty.",
+    "renameFolderModal.errorInvalidChars": "The name contains invalid characters (e.g: <>:\"/\\|?*).",
+    "renameFolderModal.successMessage": "Folder '{oldName}' successfully renamed to '{newName}'.",
+    "renameFolderModal.errorGeneric": "Error renaming folder. Please try again.",
+    "renameFolderModal.errorException": "An unexpected error occurred while trying to rename.",
+    "error.invalidFolderName": "The folder name '{NAME}' is invalid. Names '.' and '..' are not allowed.",
+    "renameFolderModal.errorConflict": "Could not rename: An item named '{NAME}' already exists."
 }

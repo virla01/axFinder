@@ -6,6 +6,7 @@ import { api } from './apiService.js';
 import { loadFolders } from './folderNavigation.js'; // Para refrescar la lista de carpetas
 import { loadFiles } from './fileDisplay.js'; // Para refrescar la vista de archivos si es necesario
 import { config } from './config.js'; // Para obtener currentPath
+import { t } from './i18n.js'; // Para traducciones
 
 let isActive = false;
 
@@ -14,15 +15,38 @@ function showModal() {
     const input = UIElements.newFolderNameInput();
     const errorDisplay = UIElements.createFolderErrorDisplay();
 
-    if (modal) {
+    if (modal && input && errorDisplay) { // Asegurarnos que todos los elementos principales existen
+        // Aplicar traducciones
+        const titleElement = modal.querySelector('h2');
+        if (titleElement) {
+            titleElement.textContent = t('createFolderModal.title');
+        }
+
+        const labelElement = modal.querySelector('label[for="new-folder-name-input"]');
+        if (labelElement) {
+            labelElement.textContent = t('createFolderModal.folderNameLabel');
+        }
+
+        input.placeholder = t('createFolderModal.folderNamePlaceholder');
+
+        const submitButton = modal.querySelector('#submit-create-folder');
+        if (submitButton) {
+            submitButton.textContent = t('createFolderModal.createButton');
+        }
+        
+        // Limpiar y preparar el modal
+        input.value = ''; 
+        errorDisplay.textContent = ''; 
+        input.focus();
+        
         modal.classList.remove('hidden');
-        if (input) input.value = ''; // Limpiar input
-        if (errorDisplay) errorDisplay.textContent = ''; // Limpiar errores previos
-        if (input) input.focus();
         isActive = true;
-        console.log('Modal de creación de carpeta mostrado.');
+        console.log('Modal de creación de carpeta mostrado y traducido.');
     } else {
-        console.error('No se pudo encontrar el elemento del modal de creación de carpeta.');
+        console.error('No se pudieron encontrar todos los elementos necesarios del modal de creación de carpeta.');
+        if (!modal) console.error('Modal principal no encontrado.');
+        if (!input) console.error('Input de nombre de carpeta no encontrado.');
+        if (!errorDisplay) console.error('Display de error no encontrado.');
     }
 }
 

@@ -4,6 +4,7 @@ import { t } from './i18n.js'; // Importar la función t real
 import { api } from './apiService.js'; // Para la subida
 import { loadFiles } from './fileDisplay.js'; // Para refrescar la vista
 import { config } from './config.js'; // Para obtener config.currentPath
+import { UIElements } from './uiElements.js';
 
 let metadataModal = null;
 let modalImagePreview = null;
@@ -84,7 +85,7 @@ export function initializeMetadataUploadModal() {
     // Event listener para el envío del formulario (subida de imagen y metadatos)
     modalForm.addEventListener('submit', handleFormSubmit);
 
-    console.log('[MetadataUploadModal] Modal de subida de metadatos inicializado.');
+    // console.log('[MetadataUploadModal] Modal de subida de metadatos inicializado.');
 }
 
 /**
@@ -181,7 +182,7 @@ function handleFileSelect(event) {
             };
             reader.readAsDataURL(file);
         } else {
-            alert(t('modal.notAnImageError')); // Traducir: "Por favor, selecciona un archivo de imagen."
+            UIElements.showNotification(t('modal.notAnImageError'), 'error'); // Traducir: "Por favor, selecciona un archivo de imagen."
             modalImagePreview.style.display = 'none';
             modalImagePreview.src = '#';
             modalDragDropText.style.display = 'block';
@@ -229,7 +230,7 @@ async function handleFormSubmit(event) {
     const file = modalFileInput.files[0];
 
     if (!file) {
-        alert(t('modal.noFileSelectedError')); // Traducir: "Por favor, selecciona una imagen para subir."
+        UIElements.showNotification(t('modal.noFileSelectedError'), 'error'); // Traducir: "Por favor, selecciona una imagen para subir."
         return;
     }
     // El input de archivo no tiene atributo "name", lo añadimos explícitamente.
@@ -238,7 +239,7 @@ async function handleFormSubmit(event) {
     // Añadir la ruta actual al FormData para que el backend sepa dónde guardar el archivo
     formData.append('currentPath', config.currentPath || '.');
 
-    console.log('[MetadataUploadModal] Enviando formulario...');
+    // console.log('[MetadataUploadModal] Enviando formulario...');
     if (saveAndUploadButton) {
         saveAndUploadButton.disabled = true;
         saveAndUploadButton.textContent = t('modal.uploadingButton') || 'Subiendo...';
@@ -251,18 +252,18 @@ async function handleFormSubmit(event) {
 
         if (response && response.success) {
             console.log(t('modal.uploadSuccessLog'), response); // Mantener el log
-            // alert(t('modal.uploadSuccessAlert', { fileName: file.name })); // Comentado o eliminado
+            // UIElements.showNotification(t('modal.uploadSuccessAlert', { fileName: file.name }), 'success'); // Comentado o eliminado
             closeMetadataModal();
             if (config.currentPath) {
                 loadFiles(config.currentPath); // Refrescar la vista de archivos
             }
         } else {
             console.error(t('modal.uploadErrorLog'), response);
-            alert(t('modal.uploadErrorMessage') + (response && response.message ? ` (${response.message})` : ''));
+            UIElements.showNotification(t('modal.uploadErrorMessage') + (response && response.message ? ` (${response.message})` : ''), 'error');
         }
     } catch (error) {
         console.error('[MetadataUploadModal] Excepción durante la subida:', error);
-        alert(t('modal.uploadExceptionMessage', { message: error.message }) || `Excepción al subir: ${error.message}`);
+        UIElements.showNotification(t('modal.uploadExceptionMessage', { message: error.message }) || `Excepción al subir: ${error.message}`, 'error');
     } finally {
         if (saveAndUploadButton) {
             saveAndUploadButton.disabled = false;

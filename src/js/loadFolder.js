@@ -1,5 +1,5 @@
 import { loadFiles } from './fileDisplay.js';
-import { LOADING_SPINNER_HTML } from './uiElements.js';
+import { UIElements, LOADING_SPINNER_HTML } from './uiElements.js';
 import { currentSortOrder, icons } from './config.js'; // Necesario para los parámetros de loadFiles si se usan e iconos
 
 export function loadFolders() {
@@ -62,18 +62,34 @@ export function loadFolders() {
                     let chevronPlaceholderHTML = `<div class="chevron w-4 h-5 flex items-center justify-center mr-1" id="${folderId}-chevron-placeholder"></div>`;
 
                     folderElement.innerHTML = `
-                        <div class="flex items-center p-2 mb-2 hover:bg-blue-100 cursor-pointer text-sm font-bold transition-colors" id="folder-${folderId}">
+                        <div class="flex items-center p-2 mb-2 hover:bg-blue-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-bold transition-colors" id="folder-${folderId}">
                             ${chevronPlaceholderHTML}
                             <div class="w-5 h-5" id="${folderId}-icon-container">
                                 ${iconHtml} <!-- Insertar el SVG aquí -->
                             </div>
-                            <span class="text-gray-800 ml-2">${folder.name}</span>
+                            <span class="text-gray-800 dark:text-white ml-2">${folder.name}</span>
                         </div>
                         <div class="ml-5 space-y-1 hidden" id="${folderId}-children">
                             <!-- Sub-elementos -->
                         </div>
                     `;
                     foldersContainer.appendChild(folderElement);
+
+                    const clickableFolderDiv = folderElement.querySelector(`#folder-${folderId}`);
+                    if (clickableFolderDiv) {
+                        clickableFolderDiv.addEventListener('contextmenu', function(event) {
+                            event.preventDefault();
+                            const menu = UIElements.folderContextMenu();
+                            if (menu) {
+                                menu.style.position = 'fixed';
+                                menu.style.left = `${event.clientX + 5}px`;
+                                menu.style.top = `${event.clientY + 5}px`;
+                                menu.classList.remove('hidden');
+                                menu.dataset.folderPath = folder.path; // Guardar la ruta de la carpeta
+                                // console.log('Context menu for folder:', folder.path);
+                            }
+                        });
+                    }
 
                     // Insertar el chevron inicial después de que el elemento esté en el DOM
                     const initialChevronPlaceholder = document.getElementById(`${folderId}-chevron-placeholder`);
@@ -120,17 +136,17 @@ export function loadFolders() {
 }
 
 function toggleFolder(folderId, folderPath, hasSubfolders) {
-    console.log(`[toggleFolder] Toggle folder: ${folderId}, Path: ${folderPath}, hasSubfolders: ${hasSubfolders}`);
+    // console.log(`[toggleFolder] Toggle folder: ${folderId}, Path: ${folderPath}, hasSubfolders: ${hasSubfolders}`);
     const childrenContainer = document.getElementById(`${folderId}-children`);
     let isOpening = false;
     // const chevronRightIcon y chevronDownIcon eliminados, se usan directamente icons.chevronRight e icons.chevronDown de config.js
     const chevronPlaceholder = document.getElementById(`${folderId}-chevron-placeholder`);
-    console.log(`[toggleFolder] Chevron placeholder found: ${!!chevronPlaceholder}`);
+    // console.log(`[toggleFolder] Chevron placeholder found: ${!!chevronPlaceholder}`);
 
     if (childrenContainer) {
         childrenContainer.classList.toggle('hidden');
         isOpening = !childrenContainer.classList.contains('hidden');
-        console.log(`[toggleFolder] Folder: ${folderId}, Path: ${folderPath}, Opening: ${isOpening}, Children HTML: '${childrenContainer.innerHTML.trim().substring(0, 50)}...'`);
+        // console.log(`[toggleFolder] Folder: ${folderId}, Path: ${folderPath}, Opening: ${isOpening}, Children HTML: '${childrenContainer.innerHTML.trim().substring(0, 50)}...'`);
 
         if (chevronPlaceholder) {
             // Limpiar contenido anterior
@@ -140,13 +156,13 @@ function toggleFolder(folderId, folderPath, hasSubfolders) {
 
             if (hasSubfolders) {
                 const svgIcon = isOpening ? icons.chevronDown : icons.chevronRight;
-                console.log(`[toggleFolder] Attempting to insert chevron for ${folderId}. Icon: ${isOpening ? 'Down' : 'Right'}, SVG content length: ${svgIcon.length}`);
+                // console.log(`[toggleFolder] Attempting to insert chevron for ${folderId}. Icon: ${isOpening ? 'Down' : 'Right'}, SVG content length: ${svgIcon.length}`);
                 // Insertar el SVG directamente en el innerHTML del placeholder
                 chevronPlaceholder.innerHTML = svgIcon;
-                console.log(`[toggleFolder] After insertion, placeholder innerHTML length: ${chevronPlaceholder.innerHTML.length}`);
+                // console.log(`[toggleFolder] After insertion, placeholder innerHTML length: ${chevronPlaceholder.innerHTML.length}`);
             } else {
                 // Si no tiene subcarpetas, el placeholder se queda vacío (ya limpiado)
-                console.log(`[toggleFolder] Folder ${folderId} has no subfolders, clearing chevron placeholder.`);
+                // console.log(`[toggleFolder] Folder ${folderId} has no subfolders, clearing chevron placeholder.`);
             }
         }
 
@@ -179,7 +195,7 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
             return response.json();
         })
         .then(data => {
-            console.log(`[loadSubFolders] Data for ${parentFolderPath}:`, JSON.stringify(data));
+            // console.log(`[loadSubFolders] Data for ${parentFolderPath}:`, JSON.stringify(data));
             if (data.success && data.folders) {
                 childrenContainer.innerHTML = ''; // Limpiar el mensaje de carga
                 if (data.folders.length === 0) {
@@ -213,33 +229,50 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
                     `;
                     childrenContainer.appendChild(subFolderElement);
 
+                        const clickableSubFolderHeader = subFolderElement.querySelector(`#folder-${subFolderId}`);
+                        if (clickableSubFolderHeader) {
+                            // Listener para el menú contextual
+                            clickableSubFolderHeader.addEventListener('contextmenu', function(event) {
+                                event.preventDefault();
+                                const menu = UIElements.folderContextMenu();
+                                if (menu) {
+                                    menu.style.position = 'fixed';
+                                    menu.style.left = `${event.clientX + 5}px`;
+                                    menu.style.top = `${event.clientY + 5}px`;
+                                    menu.classList.remove('hidden');
+                                    menu.dataset.folderPath = folder.path; // Corregido: usar folder.path
+                                    // console.log('Context menu for subfolder:', folder.path); // Corregido: usar folder.path
+                                }
+                            });
+
+                            // Listener para el clic normal (expandir/colapsar, cargar archivos)
+                            clickableSubFolderHeader.addEventListener('click', () => {
+                                const isOpening = toggleFolder(subFolderId, folder.path, folder.hasSubfolders);
+                                const iconContainer = document.getElementById(`${subFolderId}-icon-container`);
+                                if (iconContainer) {
+                                    const folderOpenIcon = folder.icons?.folderOpen || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M69.08 271.63L0 390.05V112a48 48 0 0 1 48-48h160l64 64h160a48 48 0 0 1 48 48v48H152a96.31 96.31 0 0 0-82.92 47.63z" class="ax-secondary"/><path d="M152 256h400a24 24 0 0 1 20.73 36.09l-72.46 124.16A64 64 0 0 1 445 448H45a24 24 0 0 1-20.73-36.09l72.45-124.16A64 64 0 0 1 152 256z" class="ax-primary"/></svg>';
+                                    const folderClosedIcon = folder.icons?.folderClosed || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M464 128H272l-64-64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V176c0-26.51-21.49-48-48-48z" class="ax-secondary"/></svg>';
+                                    iconContainer.innerHTML = isOpening ? folderOpenIcon : folderClosedIcon;
+                                }
+                                // Marcar como activo y desmarcar otros
+                                document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
+                                    item.classList.remove('bg-blue-100');
+                                });
+                                clickableSubFolderHeader.classList.add('bg-blue-100');
+                            });
+                        }
+
                     // Insertar el chevron inicial para subcarpetas después de que el elemento esté en el DOM
                     const initialSubChevronPlaceholder = document.getElementById(`${subFolderId}-chevron-placeholder`);
-                    console.log(`[loadSubFolders] Subfolder: ${folder.name}, ID: ${subFolderId}, hasSubfolders: ${folder.hasSubfolders}`);
-                    console.log(`[loadSubFolders] Initial sub-chevron placeholder found: ${!!initialSubChevronPlaceholder}`);
+                    // console.log(`[loadSubFolders] Subfolder: ${folder.name}, ID: ${subFolderId}, hasSubfolders: ${folder.hasSubfolders}`);
+                    // console.log(`[loadSubFolders] Initial sub-chevron placeholder found: ${!!initialSubChevronPlaceholder}`);
                     if (initialSubChevronPlaceholder && folder.hasSubfolders) {
-                        console.log(`[loadSubFolders] Attempting to insert chevronRight for ${subFolderId}. SVG content length: ${icons.chevronRight.length}`);
+                        // console.log(`[loadSubFolders] Attempting to insert chevronRight for ${subFolderId}. SVG content length: ${icons.chevronRight.length}`);
                         initialSubChevronPlaceholder.innerHTML = icons.chevronRight;
-                        console.log(`[loadSubFolders] After insertion, sub-placeholder innerHTML length: ${initialSubChevronPlaceholder.innerHTML.length}`);
+                        // console.log(`[loadSubFolders] After insertion, sub-placeholder innerHTML length: ${initialSubChevronPlaceholder.innerHTML.length}`);
                     }
 
-                    const clickableSubFolderHeader = document.getElementById(`folder-${subFolderId}`);
-                    if (clickableSubFolderHeader) {
-                        clickableSubFolderHeader.addEventListener('click', () => {
-                            const isOpening = toggleFolder(subFolderId, folder.path, folder.hasSubfolders);
-                            const iconContainer = document.getElementById(`${subFolderId}-icon-container`);
-                            if (iconContainer) {
-                                const folderOpenIcon = folder.icons?.folderOpen || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M69.08 271.63L0 390.05V112a48 48 0 0 1 48-48h160l64 64h160a48 48 0 0 1 48 48v48H152a96.31 96.31 0 0 0-82.92 47.63z" class="ax-secondary"/><path d="M152 256h400a24 24 0 0 1 20.73 36.09l-72.46 124.16A64 64 0 0 1 445 448H45a24 24 0 0 1-20.73-36.09l72.45-124.16A64 64 0 0 1 152 256z" class="ax-primary"/></svg>';
-                                const folderClosedIcon = folder.icons?.folderClosed || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M464 128H272l-64-64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V176c0-26.51-21.49-48-48-48z" class="ax-secondary"/></svg>';
-                                iconContainer.innerHTML = isOpening ? folderOpenIcon : folderClosedIcon;
-                            }
-                            // Marcar como activo y desmarcar otros
-                            document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
-                                item.classList.remove('bg-blue-100');
-                            });
-                            clickableSubFolderHeader.classList.add('bg-blue-100');
-                        });
-                    }
+
                 });
             } else {
                 console.error('Error al cargar subcarpetas:', data.message || 'Respuesta no exitosa o formato incorrecto.');

@@ -1,5 +1,6 @@
 // src/js/uiElements.js
-console.log('src/js/uiElements.js cargado');
+import { showNotification } from './notifications.js';
+
 
 export const LOADING_SPINNER_HTML = `
     <div class="flex items-center justify-center p-4">
@@ -56,4 +57,15 @@ export const UIElements = {
     configMenuPanel: () => getElement('#config-menu'),
     openConfigButton: () => getElement('#config-btn'),
     closeConfigButton: () => getElement('#close-config'),
+    folderContextMenu: () => document.getElementById('folder-context-menu'),
+    confirmDeleteFolderModal: () => document.getElementById('confirm-delete-folder-modal'),
+    showNotification: showNotification, // Exportar la función de notificación
+
+    // --- Elementos del Modal de Renombrar Carpeta ---
+    renameFolderModal: () => getElement('#rename-folder-modal'),
+    currentFolderNameDisplay: () => getElement('#current-folder-name-display'),
+    newFolderNameRenameInput: () => getElement('#new-folder-name-rename-input'),
+    renameFolderErrorDisplay: () => getElement('#rename-folder-error'),
+    submitRenameFolderButton: () => getElement('#submit-rename-folder'),
+    cancelRenameFolderButton: () => getElement('#cancel-rename-folder')
 };

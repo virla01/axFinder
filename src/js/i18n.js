@@ -9,14 +9,14 @@ let currentLanguage = 'es'; // Idioma por defecto
 async function loadTranslations(lang) {
     try {
         const fetchURL = `src/lang/${lang}.json`;
-        console.log(`[i18n] Intentando cargar traducciones desde URL (relativa a la página HTML base): ${fetchURL}`);
+        // console.log(`[i18n] Intentando cargar traducciones desde URL (relativa a la página HTML base): ${fetchURL}`);
 
         const response = await fetch(fetchURL);
         if (!response.ok) {
             throw new Error(`[i18n] HTTP error al cargar ${lang}.json! status: ${response.status} - URL: ${response.url}`);
         }
         translations = await response.json();
-        console.log(`[i18n] Traducciones cargadas para ${lang} desde .json:`, translations);
+        // console.log(`[i18n] Traducciones cargadas para ${lang} desde .json:`, translations);
     } catch (error) {
         console.error(`[i18n] Error al cargar el archivo de traducción ${lang}.json:`, error);
         console.warn(`[i18n] Se usará un objeto de traducciones vacío para ${lang}. Las claves no se traducirán.`);
@@ -37,12 +37,20 @@ export async function initI18n(defaultLang = 'es') {
 /**
  * Obtiene la traducción para una clave dada.
  * @param {string} key - La clave de traducción (ej. 'modal.title').
- * @param {Object} [options] - Opciones adicionales (ej. para interpolación, no implementado aún).
+ * @param {Object} [options] - Opciones adicionales (ej. para interpolación).
  * @returns {string} La cadena traducida o la clave si no se encuentra la traducción.
  */
 export function t(key, options = {}) {
     if (translations && typeof translations[key] !== 'undefined') {
-        return translations[key];
+        let translatedString = translations[key];
+        // Realizar la sustitución de placeholders
+        for (const placeholder in options) {
+            if (options.hasOwnProperty(placeholder)) {
+                const regex = new RegExp(`{${placeholder}}`, 'g');
+                translatedString = translatedString.replace(regex, options[placeholder]);
+            }
+        }
+        return translatedString;
     }
     console.warn(`[i18n] Traducción no encontrada para la clave: ${key}`);
     return key;
@@ -55,7 +63,7 @@ export function t(key, options = {}) {
 export async function setLanguage(lang) {
     currentLanguage = lang;
     await loadTranslations(lang);
-    console.log(`[i18n] Idioma cambiado a: ${lang}`);
+    // console.log(`[i18n] Idioma cambiado a: ${lang}`);
 }
 
 /**

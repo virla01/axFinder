@@ -59,13 +59,13 @@ export function updateFileSizeVisibility(visible) {
 }
 
 export function setViewMode(mode) {
-    console.log(`[FileDisplay] setViewMode INICIO - modo: ${mode}`);
+    // console.log(`[FileDisplay] setViewMode INICIO - modo: ${mode}`);
     const filesContainer = UIElements.fileDisplayArea();
     const gridViewContainer = document.getElementById('grid-view-container');
     const listViewContainer = document.getElementById('list-view-container');
 
-    if (gridViewContainer) console.log('[FileDisplay DEBUG setViewMode ANTES] gridViewContainer.className:', gridViewContainer.className);
-    if (listViewContainer) console.log('[FileDisplay DEBUG setViewMode ANTES] listViewContainer.className:', listViewContainer.className);
+    // if (gridViewContainer) console.log('[FileDisplay DEBUG setViewMode ANTES] gridViewContainer.className:', gridViewContainer.className);
+    // if (listViewContainer) console.log('[FileDisplay DEBUG setViewMode ANTES] listViewContainer.className:', listViewContainer.className);
 
     // Referencias a los botones de la toolbar
     const gridBtnToolbar = document.getElementById('grid-btn');
@@ -117,30 +117,30 @@ export function setViewMode(mode) {
         config.currentViewMode = 'compact';
     }
 
-    if (gridViewContainer) console.log('[FileDisplay DEBUG setViewMode DESPUES DE CAMBIO CLASES] gridViewContainer.className:', gridViewContainer.className);
-    if (listViewContainer) console.log('[FileDisplay DEBUG setViewMode DESPUES DE CAMBIO CLASES] listViewContainer.className:', listViewContainer.className);
+    // if (gridViewContainer) console.log('[FileDisplay DEBUG setViewMode DESPUES DE CAMBIO CLASES] gridViewContainer.className:', gridViewContainer.className);
+    // if (listViewContainer) console.log('[FileDisplay DEBUG setViewMode DESPUES DE CAMBIO CLASES] listViewContainer.className:', listViewContainer.className);
 
     const currentPath = config.currentPath || '.';
-    console.log(`[FileDisplay] setViewMode - Llamando a renderFiles o loadFiles para path: ${currentPath}`);
+    // console.log(`[FileDisplay] setViewMode - Llamando a renderFiles o loadFiles para path: ${currentPath}`);
     if (fileCache.has(currentPath)) {
         renderFiles(fileCache.get(currentPath), currentPath);
     } else if (currentPath) {
         loadFiles(currentPath);
     }
-    console.log('[FileDisplay] setViewMode FIN');
+    // console.log('[FileDisplay] setViewMode FIN');
 }
 
 export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrder = currentSortOrder.direction) {
-    console.log(`[FileDisplay] loadFiles INVOCADO con path: ${path}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
+    // console.log(`[FileDisplay] loadFiles INVOCADO con path: ${path}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
 
     const filesContainer = UIElements.fileDisplayArea();
     const gridViewContainer = document.getElementById('grid-view-container');
     const listViewContainer = document.getElementById('list-view-container');
 
-    console.log("[FileDisplay DEBUG] Intentando obtener elementos:");
-    console.log("[FileDisplay DEBUG] UIElements.fileDisplayArea() (#file-view) encontró:", filesContainer);
-    console.log("[FileDisplay DEBUG] document.getElementById('grid-view-container') encontró:", gridViewContainer);
-    console.log("[FileDisplay DEBUG] document.getElementById('list-view-container') encontró:", listViewContainer);
+    // console.log("[FileDisplay DEBUG] Intentando obtener elementos:");
+    // console.log("[FileDisplay DEBUG] UIElements.fileDisplayArea() (#file-view) encontró:", filesContainer);
+    // console.log("[FileDisplay DEBUG] document.getElementById('grid-view-container') encontró:", gridViewContainer);
+    // console.log("[FileDisplay DEBUG] document.getElementById('list-view-container') encontró:", listViewContainer);
 
     if (!filesContainer || !gridViewContainer || !listViewContainer) {
         console.error('[FileDisplay] Uno o más contenedores de vista de archivos (file-view, grid-view-container, list-view-container) no fueron encontrados. Estado:', {
@@ -167,9 +167,9 @@ export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrde
     config.currentPath = path;
 
     try {
-        console.log(`[FileDisplay] loadFiles -> Llamando a api.fetchFiles con: path=${path}, sortBy=${sortBy}, sortOrder=${sortOrder}`);
+        // console.log(`[FileDisplay] loadFiles -> Llamando a api.fetchFiles con: path=${path}, sortBy=${sortBy}, sortOrder=${sortOrder}`);
         const data = await api.fetchFiles(path, sortBy, sortOrder);
-        console.log("[FileDisplay] loadFiles -> Datos recibidos de api.fetchFiles:", JSON.stringify(data, null, 2));
+        // console.log("[FileDisplay] loadFiles -> Datos recibidos de api.fetchFiles:", data);
 
         if (data.success && data.items && Array.isArray(data.items)) {
             fileCache.set(path, data.items);
@@ -193,13 +193,13 @@ export async function loadFiles(path, sortBy = currentSortOrder.column, sortOrde
 }
 
 function renderFiles(files, currentPath) {
-    console.log(`[FileDisplay] renderFiles INICIO - Renderizando ${files.length} archivos en modo ${config.currentViewMode} para la ruta: ${currentPath}`);
+    // console.log(`[FileDisplay] renderFiles INICIO - Renderizando ${files.length} archivos en modo ${config.currentViewMode} para la ruta: ${currentPath}`);
     const filesContainer = UIElements.fileDisplayArea();
     const gridViewContainer = document.getElementById('grid-view-container');
     const listViewContainer = document.getElementById('list-view-container');
 
-    if (gridViewContainer) console.log('[FileDisplay DEBUG renderFiles INICIO] gridViewContainer.className:', gridViewContainer.className, 'innerHTML length:', gridViewContainer.innerHTML.length);
-    if (listViewContainer) console.log('[FileDisplay DEBUG renderFiles INICIO] listViewContainer.className:', listViewContainer.className, 'innerHTML length:', listViewContainer.innerHTML.length);
+    // if (gridViewContainer) console.log('[FileDisplay DEBUG renderFiles INICIO] gridViewContainer.className:', gridViewContainer.className, 'innerHTML length:', gridViewContainer.innerHTML.length);
+    // if (listViewContainer) console.log('[FileDisplay DEBUG renderFiles INICIO] listViewContainer.className:', listViewContainer.className, 'innerHTML length:', listViewContainer.innerHTML.length);
 
     if (!filesContainer || !gridViewContainer || !listViewContainer) {
         console.error('[FileDisplay] Contenedores de vista no encontrados para renderizar.');
@@ -257,7 +257,7 @@ function renderFiles(files, currentPath) {
                     </div>
                 `;
             } else if (item.imageUrl) {
-                console.log(`[DEBUG RenderImgGrid] Item: ${item.name}, mtime: ${item.mtime}, size: ${item.size}`);
+                // console.log(`[DEBUG RenderImgGrid] Item: ${item.name}, mtime: ${item.mtime}, size: ${item.size}`);
                 gridItem.className = 'flex flex-col items-center overflow-hidden transition-shadow bg-white border border-gray-200 rounded-lg shadow cursor-pointer file-item group hover:shadow-lg';
                 gridItem.setAttribute('data-image-url', item.imageUrl);
 
@@ -353,7 +353,7 @@ function renderFiles(files, currentPath) {
                 </div>
             `;
 
-            console.log('[FileDisplay DEBUG renderFiles] Creando listItem para:', item.name, 'Contenido HTML parcial:', listItem.innerHTML.substring(0, 100));
+            // console.log('[FileDisplay DEBUG renderFiles] Creando listItem para:', item.name, 'Contenido HTML parcial:', listItem.innerHTML.substring(0, 100));
             itemsContainer.appendChild(listItem);
         }
     });
@@ -364,7 +364,7 @@ function renderFiles(files, currentPath) {
             event.stopPropagation(); // Evitar que se propague a listeners de carpeta si están anidados
             const filePath = el.dataset.filePath;
             const fileType = el.dataset.type;
-            console.log(`[FileDisplay] Elemento clickeado: ${filePath}, Tipo: ${fileType}`);
+            // console.log(`[FileDisplay] Elemento clickeado: ${filePath}, Tipo: ${fileType}`);
             if (fileType === 'folder') {
                 loadFiles(filePath); // Cargar contenido de la subcarpeta
                 // Actualizar el árbol de carpetas si es necesario (marcar como activa, etc.)
@@ -372,7 +372,7 @@ function renderFiles(files, currentPath) {
                 document.dispatchEvent(new CustomEvent('folderNavigated', { detail: { path: filePath } }));
             } else {
                 // Lógica para abrir/previsualizar archivo
-                console.log(`[FileDisplay] Abrir/previsualizar archivo: ${filePath}`);
+                // console.log(`[FileDisplay] Abrir/previsualizar archivo: ${filePath}`);
                 // Ejemplo: openFilePreview(filePath); // Implementar esta función
             }
         });
@@ -388,7 +388,7 @@ function renderFiles(files, currentPath) {
     updateFileDateVisibility(showDate);
     updateFileSizeVisibility(showSize);
 
-    console.log('[FileDisplay DEBUG renderFiles FIN BUCLE] innerHTML de itemsContainer (si es lista):', (config.currentViewMode === 'list' && listViewContainer) ? listViewContainer.innerHTML.substring(0, 200) : 'No es lista o no hay contenedor');
+    // console.log('[FileDisplay DEBUG renderFiles FIN BUCLE] innerHTML de itemsContainer (si es lista):', (config.currentViewMode === 'list' && listViewContainer) ? listViewContainer.innerHTML.substring(0, 200) : 'No es lista o no hay contenedor');
 }
 
 function addEventListenersToItems(container) {
@@ -436,7 +436,7 @@ function addEventListenersToItems(container) {
                 const imageName = item.dataset.fileName;
 
                 if (imageUrl && imageName) { // Solo actuar si el item es una imagen
-                    console.log(`[FileDisplay] Botón Ver clickeado para: ${imageName}`);
+                    // console.log(`[FileDisplay] Botón Ver clickeado para: ${imageName}`);
                     const currentFiles = fileCache.get(config.currentPath) || [];
                     const allImagesInFolder = currentFiles.filter(file => file.imageUrl);
                     let currentIndex = -1;
@@ -445,7 +445,7 @@ function addEventListenersToItems(container) {
                     }
                     showImageModal(imageUrl, imageName, allImagesInFolder, currentIndex);
                 } else {
-                    console.log('[FileDisplay] Botón Ver clickeado, pero no es una imagen o falta data.', item.dataset);
+                    // console.log('[FileDisplay] Botón Ver clickeado, pero no es una imagen o falta data.', item.dataset);
                     // Aquí podrías manejar la acción de "ver" para otros tipos de archivo si es necesario
                     // Por ejemplo, si es un PDF o un texto, podrías abrirlo en una nueva pestaña o un visor diferente.
                     // if (item.dataset.fileType === 'file' && !imageUrl) { ... }
@@ -459,8 +459,8 @@ function addEventListenersToItems(container) {
             // Lógica para editar (placeholder)
             editButton.addEventListener('click', (event) => {
                 event.stopPropagation();
-                console.log('[FileDisplay] Botón Editar clickeado para:', item.dataset.filePath);
-                // alert(`Editar: ${item.dataset.filePath}`);
+                // console.log('[FileDisplay] Botón Editar clickeado para:', item.dataset.filePath);
+                // UIElements.showNotification(`Editar: ${item.dataset.filePath}`, 'info');
             });
         }
 
@@ -469,7 +469,7 @@ function addEventListenersToItems(container) {
             // Lógica para eliminar (placeholder)
             deleteButton.addEventListener('click', (event) => {
                 event.stopPropagation();
-                console.log('[FileDisplay] Botón Eliminar clickeado para:', item.dataset.filePath);
+                // console.log('[FileDisplay] Botón Eliminar clickeado para:', item.dataset.filePath);
                 // if (confirm(`¿Seguro que quieres eliminar ${item.dataset.fileName}?`)) {
                 //     // Llamar a la API para eliminar y luego recargar la vista
                 // }

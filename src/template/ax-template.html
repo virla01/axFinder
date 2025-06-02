@@ -7,13 +7,13 @@
         <div class="sidebar-item-inicio">
             <div class="space-y-1">
                 <div id="home-folder-link"
-                    class="flex items-center p-2 mb-2 text-sm transition-colors cursor-pointer hover:bg-blue-100">
+                    class="flex items-center p-2 mb-2 text-sm transition-colors cursor-pointer hover:bg-blue-100 dark:hover:bg-slate-800">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="inicio-img">
                         <path fill="currentColor"
                             d="M567.403 235.642L462.323 84.589A48 48 0 0 0 422.919 64H153.081a48 48 0 0 0-39.404 20.589L8.597 235.642A48.001 48.001 0 0 0 0 263.054V400c0 26.51 21.49 48 48 48h480c26.51 0 48-21.49 48-48V263.054c0-9.801-3-19.366-8.597-27.412zM153.081 112h269.838l77.913 112H75.168l77.913-112zM528 400H48V272h480v128zm-32-64c0 17.673-14.327 32-32 32s-32-14.327-32-32 14.327-32 32-32 32 14.327 32 32zm-96 0c0 17.673-14.327 32-32 32s-32-14.327-32-32 14.327-32 32-32 32 14.327 32 32z"
                             class=""></path>
                     </svg>
-                    <span class="ml-2 font-bold text-gray-800">Inicio</span>
+                    <span class="ml-2 font-bold text-gray-800 dark:text-white">Inicio</span>
                 </div>
                 <div id="sidebar-folders-container" class="space-y-1">
                     <!-- Las carpetas se cargarán aquí dinámicamente -->
@@ -97,6 +97,7 @@
         <!-- Fin Main Content Area -->
     </div>
     <!-- Fin Main Content -->
+
     <!-- Config Menu -->
     <aside id="config-menu" class="ax-sidebar">
         <div class="ax-panel-header">
@@ -155,7 +156,7 @@
                 <div class="config-group">
                     <h4 class="config-group-title">Ordenar por</h4>
                     <div class="config-item">
-                        <select id="selectSortBy" class="config-select" style="width: 100%;">
+                        <select id="selectSortBy" class="config-select" style="width: auto; margin-bottom: 0;">
                             <option value="name">Nombre de fichero</option>
                             <option value="date">Fecha</option>
                             <option value="size">Tamaño</option>
@@ -231,7 +232,7 @@
 </div>
 
 <!-- Metadata Upload Modal -->
-<div id="metadata-modal" class="modal" style="display: none;">
+<div id="metadata-modal" class="modal hidden">
     <div class="modal-content">
         <div class="flex justify-between mb-2">
             <h2 id="modal-file-name">${t('modal.metadataTitle')}</h2>
@@ -302,6 +303,69 @@
     </div>
 </div>
 
+<!-- Modal Confirmar Eliminación Carpeta -->
+<div id="confirm-delete-folder-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+    <div class="relative p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-700">
+                <svg class="h-6 w-6 text-red-600 dark:text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mt-2" id="confirm-delete-modal-title">Confirmar Eliminación</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500 dark:text-gray-300" id="confirm-delete-modal-message">
+                    ¿Estás seguro de que quieres eliminar esta carpeta? Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirm-delete-folder-button" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    Eliminar
+                </button>
+                <button id="cancel-delete-folder-button" class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 ml-3">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Folder Modal -->
+<div id="rename-folder-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold" data-i18n-key="renameFolderModal.title">Renombrar Carpeta</h2>
+            <button id="cancel-rename-folder" class="btn btn-rounded-full close">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" class="w-4 h-4">
+                    <path fill="currentColor"
+                        d="M207.6 256l107.72-107.72c6.23-6.23 6.23-16.34 0-22.58l-25.03-25.03c-6.23-6.23-16.34-6.23-22.58 0L160 208.4 52.28 100.68c-6.23-6.23-16.34-6.23-22.58 0L4.68 125.7c-6.23 6.23-6.23 16.34 0 22.58L112.4 256 4.68 363.72c-6.23 6.23-6.23 16.34 0 22.58l25.03 25.03c6.23 6.23 16.34 6.23 22.58 0L160 303.6l107.72 107.72c6.23 6.23 16.34 6.23 22.58 0l25.03-25.03c6.23-6.23 6.23-16.34 0-22.58L207.6 256z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="mb-2">
+            <p class="text-sm text-gray-600" data-i18n-key="renameFolderModal.currentNameLabel">Nombre actual: <strong id="current-folder-name-display"></strong></p>
+        </div>
+        <div class="mb-4">
+            <label for="new-folder-name-rename-input"
+                class="block mb-2 text-sm font-medium text-gray-700" data-i18n-key="renameFolderModal.newNameLabel">Nuevo nombre:</label>
+            <input type="text" id="new-folder-name-rename-input"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm form-input focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                data-i18n-placeholder="renameFolderModal.newNamePlaceholder" placeholder="Introduce el nuevo nombre">
+            <p id="rename-folder-error" class="mt-1 text-xs text-red-500"></p>
+        </div>
+        <div class="flex justify-end space-x-2">
+            <button type="button" id="submit-rename-folder"
+                class="btn btn-blue" data-i18n-key="renameFolderModal.renameButton">Renombrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Area -->
+<div id="notification-area" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-[1000]">
+    <!-- Las notificaciones se añadirán aquí mediante JavaScript -->
+</div>
+
 <!-- Create Folder Modal -->
 <div id="create-folder-modal" class="modal hidden">
     <div class="modal-content">
@@ -330,8 +394,17 @@
     </div>
 </div>
 
+<div id="folder-context-menu" class="hidden absolute z-50 bg-white border border-gray-300 rounded-md shadow-lg py-1">
+    <ul>
+        <li><a href="#" id="context-menu-rename" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Renombrar</a></li>
+        <li><a href="#" id="context-menu-delete" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-500 hover:text-white">Eliminar</a></li>
+        <!-- Puedes añadir más opciones aquí en el futuro -->
+    </ul>
+</div>
+
 <!--Footer -->
 <div class="footer">
-
+ <span class="text-gray-500 text-xs">AspectoX®</span>
+ <span class="text-gray-500 text-xs">axFinder 0.5 - 2025</span>
 </div>
 <!-- Fin Footer-- >

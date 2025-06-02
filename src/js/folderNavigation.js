@@ -1,6 +1,6 @@
 // src/js/folderNavigation.js
 // Módulo para la navegación de carpetas y su visualización en el sidebar.
-console.log('src/js/folderNavigation.js cargado con lógica de template.txt');
+
 
 // Importaciones necesarias de otros módulos de AxFinder
 import { loadFiles } from './fileDisplay.js';
