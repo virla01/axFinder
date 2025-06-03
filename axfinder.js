@@ -12,6 +12,7 @@ import { initFolderContextMenu } from './src/js/folderContextMenu.js';
 import { initConfirmDeleteFolderModal } from './src/js/confirmDeleteFolderModal.js'; // Importar initCreateFolderModal
 import { initRenameFolderModal } from './src/js/renameFolderModal.js';
 import { initI18n } from './src/js/i18n.js'; // Importar initI18n
+import { updateActiveFolderSelection } from './src/js/loadFolder.js'; // Importar updateActiveFolderSelection
 
 /**
  * Carga el template HTML principal de AxFinder y lo inyecta en el contenedor especificado.
@@ -40,78 +41,74 @@ async function initializeAxFinder(containerElement, templatePath = 'src/template
         initializeTheme();
         console.log('[AxFinder] Tema inicializado después de cargar el template.');
 
-        // Mantenemos el setTimeout por si acaso ayuda con el renderizado del template o scripts dependientes del DOM específico del template
-        setTimeout(async () => {
-            // INICIALIZAR MODALES AQUÍ PRIMERO
-            initializeMetadataUploadModal();
-            initCreateFolderModal();
-            initFolderContextMenu();
-            initConfirmDeleteFolderModal();
-            initRenameFolderModal();
-            console.log('[AxFinder] Modales inicializados dentro del setTimeout.');
+        // INICIALIZAR MODALES AQUÍ PRIMERO (movido fuera del setTimeout)
+        initializeMetadataUploadModal();
+        initCreateFolderModal();
+        initFolderContextMenu();
+        initConfirmDeleteFolderModal();
+        initRenameFolderModal();
+        console.log('[AxFinder] Modales inicializados.');
+        try {
+            await loadFolders();
+
+            // 1. OBTENER LA CONFIGURACIÓN DEL SERVIDOR (VISTA POR DEFECTO DE PHP) - OPCIONAL
+            let phpDefaultViewMode = 'grid'; // Fallback si la API falla o no se usa
             try {
-                // initializeTheme(); // MOVIDO ARRIBA
-
-                await loadFolders();
-
-                // 1. OBTENER LA CONFIGURACIÓN DEL SERVIDOR (VISTA POR DEFECTO DE PHP) - OPCIONAL
-                // Lo mantenemos por si en el futuro es útil, pero getViewModeSetting ya no lo usa como fallback directo.
-                let phpDefaultViewMode = 'grid'; // Fallback si la API falla o no se usa
-                try {
-                    const serverConfigData = await api.fetchServerConfig();
-                    if (serverConfigData.success && serverConfigData.config && serverConfigData.config.defaultViewMode) {
-                        phpDefaultViewMode = serverConfigData.config.defaultViewMode;
-                        console.log('[AxFinder] Vista por defecto de PHP recuperada (informativo):', phpDefaultViewMode);
-                    } else {
-                        console.warn('[AxFinder] No se pudo obtener la vista por defecto del servidor (informativo).', serverConfigData);
-                    }
-                } catch (error) {
-                    console.error('[AxFinder] Error al obtener la configuración del servidor (informativo):', error);
-                }
-
-                // 2. OBTENER LA VISTA PREFERIDA (LocalStorage o 'grid' por defecto)
-                // getViewModeSetting ahora devuelve 'grid' si no hay nada en localStorage.
-                const preferredViewMode = getViewModeSetting();
-                console.log("[AxFinder] Vista preferida (localStorage o 'grid' default):", preferredViewMode);
-
-                // 3. ESTABLECER config.currentViewMode
-                config.currentViewMode = preferredViewMode;
-                console.log('[AxFinder] config.currentViewMode establecido a:', config.currentViewMode);
-
-                // 4. LLAMAR A setViewMode ANTES DE loadFiles PARA ASEGURAR QUE LOS CONTENEDORES ESTÉN CORRECTOS
-                setViewMode(config.currentViewMode); // Esto actualiza clases CSS y botones
-
-                const gridBtn = document.getElementById('grid-btn');
-                const listBtn = document.getElementById('list-btn');
-                const uploadFileBtn = document.getElementById('upload-file-btn');
-
-                if (!gridBtn || !listBtn) {
-                    console.error("Botones de vista (grid-btn o list-btn) no encontrados DESPUÉS de cargar el template.");
+                const serverConfigData = await api.fetchServerConfig();
+                if (serverConfigData.success && serverConfigData.config && serverConfigData.config.defaultViewMode) {
+                    phpDefaultViewMode = serverConfigData.config.defaultViewMode;
+                    console.log('[AxFinder] Vista por defecto de PHP recuperada (informativo):', phpDefaultViewMode);
                 } else {
-                    console.log("Botones de vista encontrados. Añadiendo listeners.");
-                    gridBtn.addEventListener('click', () => setViewMode('grid'));
-                    listBtn.addEventListener('click', () => setViewMode('list'));
+                    console.warn('[AxFinder] No se pudo obtener la vista por defecto del servidor (informativo).', serverConfigData);
                 }
-
-                if (uploadFileBtn) {
-                    uploadFileBtn.addEventListener('click', () => {
-                        openMetadataModal(); // Llama sin argumentos para una nueva subida
-                    });
-                } else {
-                    console.warn('[AxFinder] Botón de subir archivo (upload-file-btn) no encontrado.');
-                }
-
-                // 5. CARGAR ARCHIVOS (renderFiles usará el config.currentViewMode ya establecido)
-                await loadFiles('.', currentSortOrder.column, currentSortOrder.direction);
-                console.log('AxFinder inicializado, template cargado, carpetas y archivos solicitados.');
-
-                // 6. INICIALIZAR MENÚ DE CONFIGURACIÓN
-                initializeConfigMenu();
-
             } catch (error) {
-                console.error('Error dentro del setTimeout de initializeAxFinder:', error);
+                console.error('[AxFinder] Error al obtener la configuración del servidor (informativo):', error);
             }
-        }, 0);
+
+            // 2. OBTENER LA VISTA PREFERIDA (LocalStorage o 'grid' por defecto)
+            const preferredViewMode = getViewModeSetting();
+            console.log("[AxFinder] Vista preferida (localStorage o 'grid' default):", preferredViewMode);
+
+            // 3. ESTABLECER config.currentViewMode
+            config.currentViewMode = preferredViewMode;
+            console.log('[AxFinder] config.currentViewMode establecido a:', config.currentViewMode);
+
+            // 4. LLAMAR A setViewMode ANTES DE loadFiles PARA ASEGURAR QUE LOS CONTENEDORES ESTÉN CORRECTOS
+            setViewMode(config.currentViewMode); // Esto actualiza clases CSS y botones
+
+            const gridBtn = document.getElementById('grid-btn');
+            const listBtn = document.getElementById('list-btn');
+            const uploadFileBtn = document.getElementById('upload-file-btn');
+
+            if (!gridBtn || !listBtn) {
+                console.error("Botones de vista (grid-btn o list-btn) no encontrados DESPUÉS de cargar el template.");
+            } else {
+                console.log("Botones de vista encontrados. Añadiendo listeners.");
+                gridBtn.addEventListener('click', () => setViewMode('grid'));
+                listBtn.addEventListener('click', () => setViewMode('list'));
+            }
+
+            if (uploadFileBtn) {
+                uploadFileBtn.addEventListener('click', () => {
+                    openMetadataModal(); // Llama sin argumentos para una nueva subida
+                });
+            } else {
+                console.warn('[AxFinder] Botón de subir archivo (upload-file-btn) no encontrado.');
+            }
+
+            // 5. CARGAR ARCHIVOS (renderFiles usará el config.currentViewMode ya establecido)
+            await loadFiles('.', currentSortOrder.column, currentSortOrder.direction);
+            console.log('AxFinder inicializado, template cargado, carpetas y archivos solicitados.');
+
+            // Asegurarse de que la carpeta inicial ('storage' o '.') esté seleccionada (movido fuera del setTimeout)
+            updateActiveFolderSelection(config.currentPath || 'storage');
+
+            // 6. INICIALIZAR MENÚ DE CONFIGURACIÓN
+            initializeConfigMenu();
+
+        } catch (error) {
+            console.error('Error durante la inicialización de AxFinder (después de la carga del template):', error);
+        }
 
     } catch (error) {
         console.error('Error durante la inicialización de AxFinder:', error);

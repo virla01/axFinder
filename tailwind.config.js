@@ -4,6 +4,7 @@ module.exports = {
 		"./index.html",
 		"./src/**/*.{html,ts,php}"
 	],
+	darkMode: ['selector', { pattern: '[data-theme="dark"]' }],
 	theme: {
 		extend: {},
 	},

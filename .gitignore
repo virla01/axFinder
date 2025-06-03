@@ -16,7 +16,6 @@ PLAN.md
 # IDEs
 .idea/
 .vscode/
-.trae/
 
 # Otros archivos temporales
 *.tmp

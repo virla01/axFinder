@@ -20,6 +20,10 @@ label {
 	@apply dark:text-white;
 }
 
+.active{
+	@apply bg-blue-50 dark:bg-slate-800;
+}
+
 /* Content gral. */
 .ax-finder {
 	@apply relative flex flex-col w-full max-h-[37.5rem] overflow-hidden border border-blue-200 dark:border-slate-700 rounded-lg;
@@ -135,9 +139,6 @@ label {
 }
 
 /* Estilos para el modal de imagen */
-/* .modal{
-	@apply fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center;
-} */
 
 .modal-content{
 	@apply bg-white max-w-[37.5rem] mx-auto flex flex-col border border-slate-200 dark:border-slate-700 rounded-lg p-4;
@@ -147,9 +148,6 @@ label {
 	@apply py-2;
 }
 
-#create-folder-modal {
-	@apply  fixed top-0 left-0 w-screen h-screen bg-white/50 items-center justify-center z-1000;
-}
 
 #ax-image-modal-overlay {
 	/* Estilos Tailwind ya aplicados en JS: fixed inset-0 bg-black bg-opacity-75 z-40 flex items-center justify-center */

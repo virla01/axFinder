@@ -1,26 +1,14 @@
 import { loadFiles } from './fileDisplay.js';
 import { UIElements, LOADING_SPINNER_HTML } from './uiElements.js';
-import { currentSortOrder, icons } from './config.js'; // Necesario para los parámetros de loadFiles si se usan e iconos
+import { currentSortOrder, icons, config } from './config.js'; // Necesario para los parámetros de loadFiles si se usan e iconos, y import 'config'
 
 export function loadFolders() {
     // Asegurarse de que el DOM esté completamente cargado antes de añadir el event listener
     const homeFolderLink = document.getElementById('home-folder-link');
     if (homeFolderLink) {
-        homeFolderLink.addEventListener('click', () => {
-            // Desmarcar la carpeta activa anterior y restaurar su icono a folderClosed
-            document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
-                item.classList.remove('bg-blue-100');
-                const prevFolderId = item.id.replace('folder-', '');
-                const prevIconContainer = document.getElementById(`${prevFolderId}-icon-container`);
-                if (prevIconContainer) {
-                    prevIconContainer.innerHTML = icons.folderClosed;
-                }
-            });
-            // Marcar "Inicio" como activo y cambiar su icono a folderOpen (si aplica)
-            homeFolderLink.classList.add('bg-blue-100');
-            // Aquí podrías cambiar el icono de "Inicio" si tuviera uno dinámico
-
-            loadFiles('storage', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio 'storage'
+        homeFolderLink.addEventListener('click', async () => {
+            await loadFiles('storage', currentSortOrder.column, currentSortOrder.direction); // Cargar el directorio 'storage'
+            updateActiveFolderSelection('storage'); // Actualizar la selección visual para 'storage'
         });
     }
     const foldersContainer = document.getElementById('sidebar-folders-container');
@@ -55,6 +43,7 @@ export function loadFolders() {
                     const folderId = folder.name.replace(/\s+/g, '-').toLowerCase();
                     const folderElement = document.createElement('div');
                     folderElement.classList.add('tree-folder');
+                    folderElement.dataset.folderPath = folder.path; // Añadir data-folder-path
                     // Usar el SVG del icono directamente desde folder.icon o el 'folderClosed' de config.js como fallback
                     const iconHtml = folder.icon ? folder.icon : icons.folderClosed;
 
@@ -77,7 +66,7 @@ export function loadFolders() {
 
                     const clickableFolderDiv = folderElement.querySelector(`#folder-${folderId}`);
                     if (clickableFolderDiv) {
-                        clickableFolderDiv.addEventListener('contextmenu', function(event) {
+                        clickableFolderDiv.addEventListener('contextmenu', function (event) {
                             event.preventDefault();
                             const menu = UIElements.folderContextMenu();
                             if (menu) {
@@ -99,28 +88,10 @@ export function loadFolders() {
 
                     const clickableFolderHeader = document.getElementById(`folder-${folderId}`);
                     if (clickableFolderHeader) {
-                        clickableFolderHeader.addEventListener('click', () => {
-                            const isOpening = toggleFolder(folderId, folder.name, folder.hasSubfolders);
-                            const iconContainer = document.getElementById(`${folderId}-icon-container`);
-                            if (iconContainer) {
-                                const folderOpenIcon = folder.icons?.folderOpen || icons.folderOpen; // Usar icons.folderOpen
-                                const folderClosedIcon = folder.icons?.folderClosed || icons.folderClosed; // Usar icons.folderClosed
-                                iconContainer.innerHTML = isOpening ? folderOpenIcon : folderClosedIcon;
-                            }
-                            // Desmarcar la carpeta activa anterior y restaurar su icono a folderClosed
-                            document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
-                                item.classList.remove('bg-blue-100');
-                                const prevFolderId = item.id.replace('folder-', '');
-                                const prevIconContainer = document.getElementById(`${prevFolderId}-icon-container`);
-                                if (prevIconContainer) {
-                                    prevIconContainer.innerHTML = icons.folderClosed;
-                                }
-                            });
-                            // Marcar la carpeta actual como activa y cambiar su icono a folderOpen
-                            clickableFolderHeader.classList.add('bg-blue-100');
-                            if (iconContainer) {
-                                iconContainer.innerHTML = icons.folderOpen;
-                            }
+                        clickableFolderHeader.addEventListener('click', async () => {
+                            const isOpening = await toggleFolder(folderId, folder.name, folder.hasSubfolders);
+                            // La lógica de icono y selección activa se moverá a updateActiveFolderSelection
+                            updateActiveFolderSelection(folder.path); // Asegurarse de pasar la ruta completa
                         });
                     }
                 });
@@ -135,7 +106,7 @@ export function loadFolders() {
         });
 }
 
-function toggleFolder(folderId, folderPath, hasSubfolders) {
+async function toggleFolder(folderId, folderPath, hasSubfolders) {
     // console.log(`[toggleFolder] Toggle folder: ${folderId}, Path: ${folderPath}, hasSubfolders: ${hasSubfolders}`);
     const childrenContainer = document.getElementById(`${folderId}-children`);
     let isOpening = false;
@@ -172,7 +143,7 @@ function toggleFolder(folderId, folderPath, hasSubfolders) {
         }
     }
     // Actualizar la ruta actual y cargar contenido
-    loadFiles(folderPath, currentSortOrder.column, currentSortOrder.direction);
+    await loadFiles(folderPath, currentSortOrder.column, currentSortOrder.direction);
     return isOpening; // Devuelve true si la carpeta se está abriendo, false si se está cerrando
 }
 
@@ -208,7 +179,7 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
                     const subFolderId = `${parentFolderId}-${folder.name.replace(/\s+/g, '-').toLowerCase()}`;
                     const subFolderElement = document.createElement('div');
                     subFolderElement.classList.add('tree-folder');
-
+                    subFolderElement.dataset.folderPath = folder.path; // Añadir data-folder-path
                     const iconHtml = folder.icon ? folder.icon : icons.folderClosed;
 
                     // const chevronRightIcon eliminado, se usa directamente icons.chevronRight de config.js
@@ -216,12 +187,12 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
                     let chevronPlaceholderHTML = `<div class="w-4 h-5 flex items-center justify-center mr-1" id="${subFolderId}-chevron-placeholder"></div>`;
 
                     subFolderElement.innerHTML = `
-                        <div class="flex items-center p-2 pl-4 mb-1 hover:bg-blue-100 cursor-pointer text-sm font-semibold transition-colors" id="folder-${subFolderId}">
+                        <div class="flex items-center p-2 pl-4 mb-1 hover:bg-blue-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-semibold transition-colors" id="folder-${subFolderId}">
                             ${chevronPlaceholderHTML}
                             <div class="w-5 h-5" id="${subFolderId}-icon-container">
                                 ${iconHtml}
                             </div>
-                            <span class="text-gray-700 ml-2">${folder.name}</span>
+                            <span class="text-gray-700 dark:text-gray-200 ml-2">${folder.name}</span>
                         </div>
                         <div class="ml-10 space-y-1 hidden" id="${subFolderId}-children">
                             <!-- Sub-elementos -->
@@ -229,38 +200,29 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
                     `;
                     childrenContainer.appendChild(subFolderElement);
 
-                        const clickableSubFolderHeader = subFolderElement.querySelector(`#folder-${subFolderId}`);
-                        if (clickableSubFolderHeader) {
-                            // Listener para el menú contextual
-                            clickableSubFolderHeader.addEventListener('contextmenu', function(event) {
-                                event.preventDefault();
-                                const menu = UIElements.folderContextMenu();
-                                if (menu) {
-                                    menu.style.position = 'fixed';
-                                    menu.style.left = `${event.clientX + 5}px`;
-                                    menu.style.top = `${event.clientY + 5}px`;
-                                    menu.classList.remove('hidden');
-                                    menu.dataset.folderPath = folder.path; // Corregido: usar folder.path
-                                    // console.log('Context menu for subfolder:', folder.path); // Corregido: usar folder.path
-                                }
-                            });
+                    const clickableSubFolderHeader = subFolderElement.querySelector(`#folder-${subFolderId}`);
+                    if (clickableSubFolderHeader) {
+                        // Listener para el menú contextual
+                        clickableSubFolderHeader.addEventListener('contextmenu', function (event) {
+                            event.preventDefault();
+                            const menu = UIElements.folderContextMenu();
+                            if (menu) {
+                                menu.style.position = 'fixed';
+                                menu.style.left = `${event.clientX + 5}px`;
+                                menu.style.top = `${event.clientY + 5}px`;
+                                menu.classList.remove('hidden');
+                                menu.dataset.folderPath = folder.path; // Corregido: usar folder.path
+                                // console.log('Context menu for subfolder:', folder.path); // Corregido: usar folder.path
+                            }
+                        });
 
-                            // Listener para el clic normal (expandir/colapsar, cargar archivos)
-                            clickableSubFolderHeader.addEventListener('click', () => {
-                                const isOpening = toggleFolder(subFolderId, folder.path, folder.hasSubfolders);
-                                const iconContainer = document.getElementById(`${subFolderId}-icon-container`);
-                                if (iconContainer) {
-                                    const folderOpenIcon = folder.icons?.folderOpen || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M69.08 271.63L0 390.05V112a48 48 0 0 1 48-48h160l64 64h160a48 48 0 0 1 48 48v48H152a96.31 96.31 0 0 0-82.92 47.63z" class="ax-secondary"/><path d="M152 256h400a24 24 0 0 1 20.73 36.09l-72.46 124.16A64 64 0 0 1 445 448H45a24 24 0 0 1-20.73-36.09l72.45-124.16A64 64 0 0 1 152 256z" class="ax-primary"/></svg>';
-                                    const folderClosedIcon = folder.icons?.folderClosed || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-auto h-5"><defs><style>.ax-secondary{opacity:.4}</style></defs><path d="M464 128H272l-64-64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V176c0-26.51-21.49-48-48-48z" class="ax-secondary"/></svg>';
-                                    iconContainer.innerHTML = isOpening ? folderOpenIcon : folderClosedIcon;
-                                }
-                                // Marcar como activo y desmarcar otros
-                                document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
-                                    item.classList.remove('bg-blue-100');
-                                });
-                                clickableSubFolderHeader.classList.add('bg-blue-100');
-                            });
-                        }
+                        // Listener para el clic normal (expandir/colapsar, cargar archivos)
+                        clickableSubFolderHeader.addEventListener('click', async () => {
+                            const isOpening = await toggleFolder(subFolderId, folder.path, folder.hasSubfolders);
+                            // La lógica de icono y selección activa se moverá a updateActiveFolderSelection
+                            updateActiveFolderSelection(folder.path); // Asegurarse de pasar la ruta completa
+                        });
+                    }
 
                     // Insertar el chevron inicial para subcarpetas después de que el elemento esté en el DOM
                     const initialSubChevronPlaceholder = document.getElementById(`${subFolderId}-chevron-placeholder`);
@@ -287,40 +249,50 @@ function loadSubFolders(parentFolderId, parentFolderPath, childrenContainer) {
 
 // Función para actualizar la selección visual de la carpeta activa
 export function updateActiveFolderSelection(folderPath) {
-    // Eliminar la clase 'bg-blue-100' de todas las carpetas
-    document.querySelectorAll('#sidebar-folders-container .bg-blue-100').forEach(item => {
-        item.classList.remove('bg-blue-100');
+    // console.log(`[LoadFolder] updateActiveFolderSelection - Procesando ruta: ${folderPath}`); // Debug log
+    // config.currentPath = folderPath; // **Eliminado**: esta función solo lee config.currentPath
+
+    // Eliminar las clases de resaltado y restaurar iconos de todas las carpetas
+    document.querySelectorAll('#sidebar-folders-container .tree-folder > div').forEach(item => {
+        item.classList.remove('bg-blue-100', 'bg-slate-950');
+        const folderId = item.id.replace('folder-', '');
+        const iconContainer = document.getElementById(`${folderId}-icon-container`);
+        if (iconContainer) {
+            iconContainer.innerHTML = icons.folderClosed;
+        }
     });
 
-    // Encontrar la carpeta con el data-path que coincide y añadir la clase
-    // Nota: Esto asume que cada elemento de carpeta tiene un atributo data-path con la ruta completa.
-    // Si no es así, necesitaríamos un enfoque diferente, quizás basado en IDs generados a partir de la ruta.
-    // Dado que los IDs ahora se basan en el nombre, buscaremos por ID.
-
-    // Generar un ID similar al que se usa al crear los elementos
-    // Esto puede ser complicado si las rutas completas no se usan para generar IDs únicos.
-    // Si los IDs son solo el nombre de la carpeta, puede haber colisiones.
-    // Si los IDs son una combinación de la ruta, necesitamos replicar esa lógica aquí.
-
-    // Asumiendo que los IDs son 'folder-' + nombre de la carpeta (limpio)
-    // Esto puede no ser suficiente si hay carpetas con el mismo nombre en diferentes niveles.
-    // Si los IDs se generan como 'folder-' + ruta_completa_codificada, necesitamos esa lógica.
-
-    // Basándonos en el código actual, los IDs son 'folder-' + folderId (nombre limpio).
-    // Esto significa que solo podemos seleccionar por el nombre de la carpeta, lo cual no es ideal para rutas únicas.
-    // Para una selección precisa, los IDs deberían incluir la ruta completa o ser generados de forma única.
-
-    // Por ahora, intentaremos con el nombre limpio, pero ten en cuenta esta limitación.
-    const folderName = folderPath.split('/').pop(); // Obtener el último segmento de la ruta
-    const folderId = folderName.replace(/\s+/g, '-').toLowerCase();
-    const folderElement = document.getElementById(`folder-${folderId}`);
-
-    if (folderElement) {
-        folderElement.classList.add('bg-blue-100');
+    // Desmarcar la carpeta 'Inicio' si no es la carpeta activa
+    const homeFolderLink = document.getElementById('home-folder-link');
+    if (homeFolderLink) {
+        homeFolderLink.classList.remove('bg-blue-100');
+        homeFolderLink.classList.remove('bg-slate-950'); // Asegurar que también se remueve la clase de modo oscuro
+        // Si tienes un icono dinámico para "Inicio" y no es el activo, restaurarlo aquí
     }
-    // Considerar expandir las carpetas padre si la carpeta activa no es de nivel superior
-    // Esto requeriría almacenar la estructura del árbol o tener una forma de obtener los padres.
-    // Por ahora, solo seleccionamos la carpeta final.
+
+    // Identificar la carpeta activa por su data-folder-path
+    const selectedFolderElement = document.querySelector(`[data-folder-path="${CSS.escape(folderPath)}"] > div`);
+
+    if (selectedFolderElement) {
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark'; // Usar getAttribute('data-theme')
+        // console.log(`[LoadFolder] updateActiveFolderSelection - Carpeta ${folderPath}. Es modo oscuro: ${isDarkMode}`); // Debug log
+        // Aplicar la clase de fondo según el tema
+        selectedFolderElement.classList.add(isDarkMode ? 'bg-slate-950' : 'bg-blue-100');
+
+        // Cambiar el icono de la carpeta seleccionada a abierto
+        const folderId = selectedFolderElement.id.replace('folder-', '');
+        const iconContainer = document.getElementById(`${folderId}-icon-container`);
+        if (iconContainer) {
+            iconContainer.innerHTML = icons.folderOpen;
+        }
+    } else if (folderPath === 'storage' || folderPath === '.') { // Ahora también reconoce '.' para la carpeta raíz
+        // Caso especial para la carpeta 'storage' (Inicio)
+        if (homeFolderLink) {
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark'; // Usar getAttribute('data-theme')
+            // console.log(`[LoadFolder] updateActiveFolderSelection - Carpeta INICIO. Es modo oscuro: ${isDarkMode}`); // Debug log
+            homeFolderLink.classList.add(isDarkMode ? 'bg-slate-950' : 'bg-blue-100');
+        }
+    }
 }
 
 // Exportar loadFolders para que pueda ser llamada desde axfinder.js

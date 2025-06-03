@@ -1,6 +1,7 @@
 import { UIElements } from './uiElements.js'; // Asumimos que añadiremos los botones relevantes a UIElements
 import { updateFileNameVisibility, updateFileDateVisibility, updateFileSizeVisibility } from './fileDisplay.js';
-import { currentSortOrder as appCurrentSortOrder, setSortOrder as appSetSortOrder, config as appConfig } from './config.js'; // Renombrado para evitar conflicto
+import { currentSortOrder as appCurrentSortOrder, setSortOrder as appSetSortOrder, config as appConfig, config } from './config.js'; // Renombrado para evitar conflicto
+import { updateActiveFolderSelection } from './loadFolder.js'; // Importar updateActiveFolderSelection
 // TODO: Necesitaremos importar funciones de fileDisplay.js para actualizar la vista en tiempo real
 // import { toggleFileNameDisplay, toggleDateDisplay, toggleFileSizeDisplay } from './fileDisplay.js';
 
@@ -39,10 +40,10 @@ function setDisplaySetting(key, value) {
 export function getViewModeSetting() {
     const storedViewMode = localStorage.getItem(LS_VIEW_MODE);
     if (storedViewMode && ['grid', 'list', 'compact'].includes(storedViewMode)) {
-        console.log('[ConfigMenu] getViewModeSetting: Usando valor de localStorage:', storedViewMode);
+        // console.log('[ConfigMenu] getViewModeSetting: Usando valor de localStorage:', storedViewMode);
         return storedViewMode;
     }
-    console.log('[ConfigMenu] getViewModeSetting: localStorage vacío o inválido. Usando "grid" por defecto.');
+    // console.log('[ConfigMenu] getViewModeSetting: localStorage vacío o inválido. Usando "grid" por defecto.');
     return 'grid'; // Fallback a 'grid' si no hay nada en localStorage o es inválido
 }
 
@@ -56,27 +57,40 @@ function setViewModeSetting(value) {
 
 // --- LÓGICA DE TEMAS (AJUSTADA PARA data-theme) ---
 function applyTheme(theme) {
-    console.log(`[Theme] applyTheme llamada con: '${theme}'`); // Log de entrada
+    // console.log(`[Theme] applyTheme llamada con: '${theme}'`); // Log de entrada
     const rootElement = document.documentElement;
+
     if (theme === 'system') {
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        console.log(`[Theme] Modo Sistema. systemPrefersDark: ${systemPrefersDark}`); // Log
+        // console.log(`[Theme] Modo Sistema. systemPrefersDark: ${systemPrefersDark}`); // Log
         if (systemPrefersDark) {
             rootElement.setAttribute('data-theme', 'dark');
         } else {
+            // Si es sistema y prefiere claro, remover el atributo data-theme
             rootElement.removeAttribute('data-theme');
         }
         localStorage.removeItem(LS_THEME);
-        console.log(`[Theme] Aplicando tema del sistema: ${systemPrefersDark ? 'oscuro' : 'claro'}. Atributo data-theme: ${rootElement.getAttribute('data-theme')}`);
+        // console.log(`[Theme] Aplicando tema del sistema: ${systemPrefersDark ? 'oscuro' : 'claro'}. Atributo data-theme: ${rootElement.getAttribute('data-theme')}`);
     } else {
         if (theme === 'dark') {
             rootElement.setAttribute('data-theme', 'dark');
         } else {
-            rootElement.removeAttribute('data-theme'); // Para 'light', quitamos el atributo
+            // Para 'light' explícito, remover el atributo data-theme
+            rootElement.removeAttribute('data-theme');
         }
         localStorage.setItem(LS_THEME, theme);
-        console.log(`[Theme] Aplicando tema: ${theme}. Atributo data-theme: ${rootElement.getAttribute('data-theme')}`);
+        // console.log(`[Theme] Aplicando tema: ${theme}. Atributo data-theme: ${rootElement.getAttribute('data-theme')}`);
     }
+
+    // console.log(`[ConfigMenu] applyTheme - config.currentPath antes de actualizar: ${config.currentPath}`); // Debug log
+    // Después de aplicar el tema, actualiza la selección de la carpeta activa
+    if (config.currentPath) {
+        updateActiveFolderSelection(config.currentPath);
+    } else {
+        // Si no hay una ruta activa (ej. al inicio), resalta 'storage'
+        updateActiveFolderSelection('storage');
+    }
+    // console.log(`[Theme] applyTheme - Despues de actualizar la seleccion. data-theme actual: ${document.documentElement.getAttribute('data-theme')}`); // Nuevo log
 }
 
 // Función para inicializar el tema al cargar la página
@@ -92,41 +106,42 @@ export function initializeTheme() {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
         const currentSelectedTheme = localStorage.getItem(LS_THEME);
         if (!currentSelectedTheme || currentSelectedTheme === 'system') {
-            console.log("[Theme] Preferencia del sistema cambió, aplicando...");
+            // console.log("[Theme] Preferencia del sistema cambió, aplicando...");
             applyTheme('system');
         }
     });
 }
+
 // Llamar a initializeTheme cuando el script se carga por primera vez.
 // Esto es importante para que el tema se aplique antes de que el usuario interactúe.
 // initializeTheme(); // Se llamará desde axfinder.js después de cargar el DOM.
 
 export function initializeConfigMenu() {
-    console.log("[ConfigMenu] Inicializando menú de configuración...");
+    // console.log("[ConfigMenu] Inicializando menú de configuración...");
     const configMenu = document.getElementById('config-menu');
     const configBtn = document.getElementById('config-btn'); // Botón para abrir
     const closeConfigBtn = document.getElementById('close-config'); // Botón para cerrar
 
     if (!configMenu) {
-        console.warn("[ConfigMenu] Elemento del menú de configuración (#config-menu) no encontrado. La funcionalidad del menú estará deshabilitada.");
+        // console.warn("[ConfigMenu] Elemento del menú de configuración (#config-menu) no encontrado. La funcionalidad del menú estará deshabilitada.");
         return;
     }
 
     if (!configBtn) {
-        console.warn("[ConfigMenu] Botón para abrir el menú de configuración (#config-btn) no encontrado.");
+        // console.warn("[ConfigMenu] Botón para abrir el menú de configuración (#config-btn) no encontrado.");
     } else {
         configBtn.addEventListener('click', () => {
-            console.log("[ConfigMenu] Botón #config-btn clickeado, abriendo menú.");
+            // console.log("[ConfigMenu] Botón #config-btn clickeado, abriendo menú.");
             configMenu.classList.remove('hidden');
             configMenu.classList.add('open');
         });
     }
 
     if (!closeConfigBtn) {
-        console.warn("[ConfigMenu] Botón para cerrar el menú de configuración (#close-config) no encontrado en el HTML del menú.");
+        // console.warn("[ConfigMenu] Botón para cerrar el menú de configuración (#close-config) no encontrado en el HTML del menú.");
     } else {
         closeConfigBtn.addEventListener('click', () => {
-            console.log("[ConfigMenu] Botón #close-config clickeado, cerrando menú.");
+            // console.log("[ConfigMenu] Botón #close-config clickeado, cerrando menú.");
             configMenu.classList.add('hidden');
             configMenu.classList.remove('open');
         });
@@ -140,7 +155,7 @@ export function initializeConfigMenu() {
         // El warning ya se mostró arriba.
     }
 
-    console.log("[ConfigMenu] Menú de configuración inicializado (listeners para abrir/cerrar).");
+    // console.log("[ConfigMenu] Menú de configuración inicializado (listeners para abrir/cerrar).");
 }
 
 async function initializeSettingControls(configMenuElement) {
@@ -166,7 +181,7 @@ async function initializeSettingControls(configMenuElement) {
             updateFileNameVisibility(newValue);
         });
     } else {
-        console.warn('[ConfigMenu] Checkbox #chkShowFileName no encontrado.');
+        // console.warn('[ConfigMenu] Checkbox #chkShowFileName no encontrado.');
     }
 
     if (chkShowDate) {
@@ -177,7 +192,7 @@ async function initializeSettingControls(configMenuElement) {
             updateFileDateVisibility(newValue);
         });
     } else {
-        console.warn('[ConfigMenu] Checkbox #chkShowDate no encontrado.');
+        // console.warn('[ConfigMenu] Checkbox #chkShowDate no encontrado.');
     }
 
     if (chkShowFileSize) {
@@ -188,7 +203,7 @@ async function initializeSettingControls(configMenuElement) {
             updateFileSizeVisibility(newValue);
         });
     } else {
-        console.warn('[ConfigMenu] Checkbox #chkShowFileSize no encontrado.');
+        // console.warn('[ConfigMenu] Checkbox #chkShowFileSize no encontrado.');
     }
 
     // --- Radios de Vista ---
@@ -245,7 +260,7 @@ async function initializeSettingControls(configMenuElement) {
             }
         });
     } else {
-        console.warn('[ConfigMenu] Dropdown #selectSortBy no encontrado.');
+        // console.warn('[ConfigMenu] Dropdown #selectSortBy no encontrado.');
     }
 
     // --- Radios de Orden (Ascendente/Descendente) ---
@@ -272,7 +287,7 @@ async function initializeSettingControls(configMenuElement) {
         radioSortAsc.addEventListener('change', sortDirectionHandler);
         radioSortDesc.addEventListener('change', sortDirectionHandler);
     } else {
-        console.warn('[ConfigMenu] Radios de dirección de orden (#radioSortAsc o #radioSortDesc) no encontrados.');
+        // console.warn('[ConfigMenu] Radios de dirección de orden (#radioSortAsc o #radioSortDesc) no encontrados.');
     }
 
     // --- Radios de Tema ---
@@ -287,7 +302,10 @@ async function initializeSettingControls(configMenuElement) {
 
     const themeChangeHandler = (event) => {
         if (event.target.checked) {
+            // console.log(`[ConfigMenu] themeChangeHandler - Valor del tema seleccionado: ${event.target.value}`); // Nuevo log
             applyTheme(event.target.value);
+            // **Eliminado**: updateActiveFolderSelection ya se llama desde applyTheme.
+            // updateActiveFolderSelection(config.currentPath || 'storage');
         }
     };
 
@@ -295,7 +313,7 @@ async function initializeSettingControls(configMenuElement) {
     if (radioThemeDark) radioThemeDark.addEventListener('change', themeChangeHandler);
     if (radioThemeSystem) radioThemeSystem.addEventListener('change', themeChangeHandler);
 
-    console.log("[ConfigMenu] Controles de configuración inicializados.");
+    // console.log("[ConfigMenu] Controles de configuración inicializados.");
 }
 
 // Podrías añadir funciones para guardar/cargar configuraciones desde localStorage si quieres persistencia 

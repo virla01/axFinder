@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+- Write and respond in Spanish, and the code in Spanish as well.
+- Ask questions before adding code. It's better to have a conversation than to write code for no reason.
+- Never change what's already working, unless it's to improve it, and for that, it's always better to ask.
+
+- I prefer that you provide several options to follow in the form of a button at the end, and with a click, I provide the answer so you can continue.

@@ -232,7 +232,7 @@
 </div>
 
 <!-- Metadata Upload Modal -->
-<div id="metadata-modal" class="modal hidden">
+<div id="metadata-modal" class="modal fixed inset-0 bg-black/70 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
     <div class="modal-content">
         <div class="flex justify-between mb-2">
             <h2 id="modal-file-name">${t('modal.metadataTitle')}</h2>
@@ -304,7 +304,7 @@
 </div>
 
 <!-- Modal Confirmar Eliminación Carpeta -->
-<div id="confirm-delete-folder-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+<div id="confirm-delete-folder-modal" class="fixed inset-0 bg-black/70 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
     <div class="relative p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="mt-3 text-center">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-700">
@@ -331,7 +331,7 @@
 </div>
 
 <!-- Rename Folder Modal -->
-<div id="rename-folder-modal" class="modal hidden">
+<div id="rename-folder-modal" class="fixed inset-0 bg-black/70 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
     <div class="modal-content">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold" data-i18n-key="renameFolderModal.title">Renombrar Carpeta</h2>
@@ -362,12 +362,12 @@
 </div>
 
 <!-- Notification Area -->
-<div id="notification-area" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-[1000]">
+<div id="notification-area" class="fixed inset-0 bg-black/70 overflow-y-auto h-full w-full flex items-center justify-center hidden z-[1000]">
     <!-- Las notificaciones se añadirán aquí mediante JavaScript -->
 </div>
 
 <!-- Create Folder Modal -->
-<div id="create-folder-modal" class="modal hidden">
+<div id="create-folder-modal" class="modal fixed inset-0 bg-black/70 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
     <div class="modal-content">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">${t('createFolderModal.title')}</h2>
